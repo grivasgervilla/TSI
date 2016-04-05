@@ -1,0 +1,5 @@
+<launch>
+  <node name="stage" pkg="stage_ros" type="stageros" args="$(find stage_ros)/world/willow-erratic.world"/>
+  <node name="client" pkg="action_lib_scd" type="client_scb_node"/>
+  <node name="server" pkg="action_lib_scd" type="server_scb_node"/>
+</launch>
