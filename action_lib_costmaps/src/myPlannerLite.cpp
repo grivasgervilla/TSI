@@ -1,12 +1,15 @@
 #include "myPlannerLite.h"
 #include "geometry_msgs/Twist.h"
 #include <tf/transform_datatypes.h> //para transformar quaternions en ángulos, necesario en odomCallBack
+#include <iostream>
+
+using namespace std;
 
 LocalPlanner::LocalPlanner()
 {
 
     CAMPOATT.radius = 0.01; CAMPOATT.spread = 3.5; CAMPOATT.intens = 0.05; //Parámetros de configuración (radio, spread, alpha) del campo actractivo.
-    CAMPOREP.radius = 0.02; CAMPOREP.spread = 1.0; CAMPOREP.intens = 0.01;//Parámetros de configuración (radio, spread, beta)del campo repulsivo.
+    CAMPOREP.radius = 0.01; CAMPOREP.spread = 1.0; CAMPOREP.intens = 0.04;//0.01Parámetros de configuración (radio, spread, beta)del campo repulsivo.
     posGoal.x = posGoal.y = 0;  //Posición del objetivo
     pos.x = pos.y = 0;      //Posición actual
     yaw =0;     //Angulo (en radianes) de orientación del robot
@@ -78,12 +81,34 @@ void LocalPlanner::setDeltaAtractivo() {
 void LocalPlanner::getOneDeltaRepulsivo(Tupla posObst, Tupla &deltaO){
 // recibe una posición de un obstáculo y calcula el componente repulsivo para ese obstáculo.
 // Devuelve los valores en deltaO.x y deltaO.y
+
+//CAMPOREP.radius = 0.02; CAMPOREP.spread = 1.0; CAMPOREP.intens = 0.01;
+    double d = distancia(posObst, pos);
+    double theta = atan2(posObst.y - pos.y, posObst.x - pos.x);
+	 
+    if (d < CAMPOREP.radius){
+        deltaO.x = -500000 * cos(theta);
+        deltaO.y = -500000 * sin(theta);
+        
+    }
+    else if (d > CAMPOREP.radius + CAMPOREP.spread)
+        deltaO.x = deltaO.y = 0;
+    else{
+        deltaO.x = -CAMPOREP.intens * (CAMPOREP.radius + CAMPOREP.spread - d) * cos(theta);
+        deltaO.y = -CAMPOREP.intens * (CAMPOREP.radius + CAMPOREP.spread - d) * sin(theta);
+    }
 }
 
 void LocalPlanner::setTotalRepulsivo(){
 //Calcula la componente total repulsiva como suma de las componentes repulsivas para cada obstáculo.
     deltaObst.x = deltaObst.y = 0;
-
+				
+    Tupla deltaActual;
+    for (int i = 0; i < posObs.size(); i++){
+        getOneDeltaRepulsivo(posObs.at(i),deltaActual);
+        deltaObst.x += deltaActual.x;
+        deltaObst.y += deltaActual.y;
+    }
 }
 
 void LocalPlanner::scanCallBack(const sensor_msgs::LaserScan::ConstPtr& scan)
@@ -105,7 +130,7 @@ void LocalPlanner::scanCallBack(const sensor_msgs::LaserScan::ConstPtr& scan)
 		Tupla obstaculo;
 		obstaculo.x =pos.x + scan->ranges[currIndex]*cos(yaw+bearing);
 		obstaculo.y =pos.y + scan->ranges[currIndex]*sin(yaw+bearing);
-		//ROS_INFO("Obstaculo %d en posición (%f,%f)",currIndex,obstaculo.x, obstaculo.y);
+		ROS_INFO("Obstaculo %d en posición (%f,%f)",currIndex,obstaculo.x, obstaculo.y);
 		posObs.push_back(obstaculo);
 		bearing += scan->angle_increment;
 		}
@@ -120,24 +145,36 @@ double normalize(double angle) {
 }
 void LocalPlanner::setv_Angular(){
 //calcula la velocidad angular
-    double angulo = atan2(delta.y, delta.x);
-    double diferencia_normalizada = normalize(angulo-yaw);
+    double angulo, diferencia_normalizada;
+	
+	 if (status_suicida) {
+		 angulo = atan2(dir_salvamento.y, dir_salvamento.x);
+		 diferencia_normalizada = normalize(angulo - yaw);	
+	 }
+	 else {
+	 	angulo = atan2(delta.y, delta.x);
+    	diferencia_normalizada = normalize(angulo-yaw);
+    }
+	 	
+	
+	 if ((0 <= diferencia_normalizada) and (diferencia_normalizada <= M_PI))
+	     if (diferencia_normalizada > V_ANGULAR_CTE)
+	         v_angular = V_ANGULAR_CTE;
+	     else v_angular = (diferencia_normalizada < EPSILON_ANGULAR)? 0: diferencia_normalizada;
+	 else
+	     if (diferencia_normalizada < (-1)*V_ANGULAR_CTE)
+	         v_angular = (-1)*V_ANGULAR_CTE;
+	     else v_angular = (diferencia_normalizada > (-1)*EPSILON_ANGULAR)? 0: diferencia_normalizada;
 
-
-    if ((0 <= diferencia_normalizada) and (diferencia_normalizada <= M_PI))
-        if (diferencia_normalizada > V_ANGULAR_CTE)
-            v_angular = V_ANGULAR_CTE;
-        else v_angular = (diferencia_normalizada < EPSILON_ANGULAR)? 0: diferencia_normalizada;
-    else
-        if (diferencia_normalizada < (-1)*V_ANGULAR_CTE)
-            v_angular = (-1)*V_ANGULAR_CTE;
-        else v_angular = (diferencia_normalizada > (-1)*EPSILON_ANGULAR)? 0: diferencia_normalizada;
-
-
+	if(v_angular == 0)
+		status_suicida = false;	
+	
 }
 void LocalPlanner::setv_Lineal(){
 //calcula la velocidad lineal
     v_lineal =  sqrt(delta.x*delta.x + delta.y*delta.y);
+    if (status_suicida)
+    	v_lineal = 0.0; //no avanzo
     }
 bool LocalPlanner::goalAchieved(){
 

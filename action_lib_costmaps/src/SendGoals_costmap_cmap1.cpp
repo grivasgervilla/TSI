@@ -5,16 +5,19 @@
 #include "tf/transform_listener.h"
 #include "costmap_2d/costmap_2d_ros.h"
 #include <costmap_2d/costmap_2d.h>
+#include <vector>
 
 
 #include <boost/thread.hpp>
 
 
+using namespace std;
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
-double prev_pos_x,prev_pos_y;
+double prev_pos_x,prev_pos_y, goal_x, goal_y;
 bool condicion_parada;
+int tiempo_parado = 0;
 const int TOPE_TIEMPO_PARADO = 500;
 
 //imprime en pantalla el contendio de un costmap
@@ -83,8 +86,247 @@ void rellenaPoseStamped (double wx, double wy, geometry_msgs::PoseStamped &pose,
     pose.pose.orientation.z = 0.0;
     pose.pose.orientation.w = 1.0;
     }
+    
+struct Nodo {
+	unsigned int id;
+	unsigned int padre;
+	double g;
+	double f;
+};
+
+Nodo crearNodo(unsigned int id, unsigned int padre, double g, double f) {
+	Nodo nuevo;
+	nuevo.id = id;
+	nuevo.padre = padre;
+	nuevo.g = g;
+	nuevo.f = f;	
+	
+	return nuevo;
+}
+
+
+//Funcion que calcula la distancia estimada de un nodo a la meta
+double h(unsigned int id, unsigned int meta, costmap_2d::Costmap2D *costmap) {
+	unsigned int id_x, id_y, meta_x, meta_y;
+	costmap->indexToCells(id, id_x, id_y);
+	costmap->indexToCells(meta, meta_x, meta_y);
+	
+	double dist = sqrt((id_x-meta_x)*(id_x-meta_x)+(id_y-meta_y)*(id_y-meta_y));
+	
+	return dist;
+
+}
+
+Nodo getIdMejor (vector<Nodo> &nodos) {
+	double f_min = 9999999999999999999;
+	int id_min;
+	
+	for (int i = 0; i < nodos.size(); i++)
+		if (nodos.at(i).f < f_min) {
+			f_min = nodos.at(i).f;
+			id_min = i;
+		}
+	
+	Nodo mejor_nodo = nodos.at(id_min);
+	nodos.erase(nodos.begin() + id_min);
+	
+	return mejor_nodo;
+
+}
+
+vector<Nodo> getHijos (Nodo nodo, unsigned int meta, costmap_2d::Costmap2D *costmap) {
+	vector<unsigned int> hijos_id = findFreeNeighborCell (nodo.id, costmap);
+	vector<Nodo> nodos_hijos;
+	double g,f;
+	
+	for (int i = 0; i < hijos_id.size(); i++) {
+		g = nodo.g + 1.0;
+		f = h(hijos_id.at(i), meta, costmap) + g;
+		nodos_hijos.push_back(crearNodo(hijos_id.at(i), nodo.id, g, f));
+	}
+	
+	return nodos_hijos;
+}
+
+int findNodo (unsigned int id, vector<Nodo> &nodos) {
+	for (int i = 0; i < nodos.size(); i++)
+		if (nodos.at(i).id == id)
+			return i;
+			
+	return -1;
+}
+
+vector<geometry_msgs::PoseStamped> fabricarCamino(vector<Nodo> &cerrados, unsigned int start, costmap_2d::Costmap2DROS *costmap_ros) {
+		vector<int> idx_camino;
+		int idx_padre;
+	   bool fin = false;
+	   double wx, wy;
+		unsigned int mx, my;
+	   costmap_2d::Costmap2D *costmap = costmap_ros->getCostmap();
+	   
+	   //Creamos un camino dado por indices desde el final al principio
+	   unsigned int padre = cerrados.at(cerrados.size()-1).padre;
+	   idx_camino.push_back(cerrados.size()-1);
+	   
+	   while (!fin) {
+	   	idx_padre = findNodo(padre, cerrados);
+	   	
+	   	idx_camino.push_back(idx_padre);
+	   	padre = cerrados.at(idx_padre).padre;
+	   	
+	   	if (padre == start)
+	   		fin = true;	   
+	   }
+	   
+	   idx_camino.push_back(start);
+		
+		//Creamos el camino de PoseStamped de principio a fin
+		vector<geometry_msgs::PoseStamped> camino (idx_camino.size());
+		
+		for (int i = idx_camino.size()-1; i >= 0; i--) {
+			costmap->indexToCells(idx_camino.at(i), mx, my);
+			costmap->mapToWorld(mx, my, wx, wy);
+			rellenaPoseStamped(wx, wy, camino.at(camino.size()-i-1), costmap_ros);		
+		
+		}
+		
+		return camino;
+
+}
+
+	
+std::vector<geometry_msgs::PoseStamped> A_estrella(unsigned int start, unsigned int goal, costmap_2d::Costmap2DROS *costmap_ros) {
+	ROS_INFO("ENTRO EN EL A ESTRELLA");
+	vector<geometry_msgs::PoseStamped> camino;
+	vector<Nodo> abiertos, cerrados, sucesores;
+	bool fin = false;
+	Nodo nodo_expand;
+	costmap_2d::Costmap2D *costmap = costmap_ros->getCostmap();
+		
+	Nodo inicial = crearNodo(start, 0, 0.0, h(start, goal, costmap));
+	abiertos.push_back(inicial);
+	
+	while (!fin && abiertos.size() > 0) {
+		nodo_expand = getIdMejor(abiertos);
+		
+		//comprobamos si el nodo extraido es el final
+		if (nodo_expand.id == goal)
+			fin = true;
+		
+		//generamos los hijos de este nodo
+		sucesores = getHijos(nodo_expand, goal, costmap);
+		
+		for (int i = 0; i < sucesores.size(); i++) {
+			int idx_nodo_en_cerrados = findNodo(sucesores.at(i).id, cerrados);
+			int idx_nodo_en_abiertos = findNodo(sucesores.at(i).id, abiertos);
+			
+			if (idx_nodo_en_cerrados == -1 && idx_nodo_en_abiertos == -1) //si el nodo no esta en abiertos ni en cerrados
+				abiertos.push_back(sucesores.at(i));
+			else if (idx_nodo_en_cerrados != -1) //si esta en cerrados
+				if (cerrados.at(idx_nodo_en_cerrados).g > sucesores.at(i).g) //si la g que tenia es peor que la nueva actualizo datos
+					cerrados.at(idx_nodo_en_cerrados) = sucesores.at(i);				
+			else //esta en abiertos
+				if (abiertos.at(idx_nodo_en_abiertos).g > sucesores.at(i).g) //si la g que tenia es peor que la nueva actualizo datos
+					abiertos.at(idx_nodo_en_abiertos) = sucesores.at(i);	
+		}
+		
+		//introduzco el nodo que acabo de expandir en cerrados
+		cerrados.push_back(nodo_expand);
+	
+	}
+	
+	//si hemos encontrado solucion la formateamos y devolvemos
+	if (fin)
+		camino = fabricarCamino(cerrados, start, costmap_ros);	
+	
+	
+	return camino;	
+}
+
+
 
 bool localPlanner(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan, costmap_2d::Costmap2DROS *costmap_ros){
+
+
+    ROS_INFO("localPlanner: Got a start: %.2f, %.2f, and a goal: %.2f, %.2f", start.pose.position.x, start.pose.position.y, goal.pose.position.x, goal.pose.position.y);
+
+    plan.clear();
+    costmap_2d::Costmap2D *costmap = costmap_ros->getCostmap();
+    double distancia = 0.0;
+
+    //pasamos el goal y start a coordenadas del costmap
+    double goal_x = goal.pose.position.x;
+    double goal_y = goal.pose.position.y;
+    unsigned int mgoal_x, mgoal_y;
+    double p_x,p_y;
+    //transformamos las coordenadas del mundo a coordenadas del costmap
+    costmap->worldToMap(goal_x,goal_y,mgoal_x, mgoal_y);
+    if ((mgoal_x>=0)&&(mgoal_x < costmap->getSizeInCellsX())&&(mgoal_y>=0 )&&(mgoal_y < costmap->getSizeInCellsY()))
+      unsigned int indice_goal = costmap->getIndex(mgoal_x, mgoal_y);
+    else {
+      double min_distancia = 5000000000;
+      int indice_goal;
+      for(int i = 0; i < costmap->getSizeInCellsX(); i++){
+        if (costmap->getCost(i,0) == costmap_2d::FREE_SPACE){
+        	 costmap->mapToWorld(i,0,p_x,p_y);
+        	 distancia = (p_x - goal_x)*(p_x - goal_x) + (p_y -goal_y)*(p_y -goal_y);
+          if (distancia < min_distancia){
+            min_distancia = distancia;
+            indice_goal = costmap->getIndex(i,0);
+          }
+        }
+
+        if (costmap->getCost(i,costmap->getSizeInCellsY()-1) == costmap_2d::FREE_SPACE){
+          	costmap->mapToWorld(i,costmap->getSizeInCellsY()-1,p_x,p_y);
+        	 	distancia = (p_x - goal_x)*(p_x - goal_x) + (p_y -goal_y)*(p_y -goal_y);
+            if (distancia < min_distancia){
+              min_distancia = distancia;
+              indice_goal = costmap->getIndex(i,costmap->getSizeInCellsY()-1);
+            }
+        }
+      }
+
+      for(int i = 0; i < costmap->getSizeInCellsY(); i++){
+        
+        if (costmap->getCost(0,i) == costmap_2d::FREE_SPACE){
+        	 costmap->mapToWorld(0,i,p_x,p_y);
+        	 distancia = (p_x - goal_x)*(p_x - goal_x) + (p_y -goal_y)*(p_y -goal_y);
+          if (distancia < min_distancia){
+            min_distancia = distancia;
+            indice_goal = costmap->getIndex(0,i);
+          }
+        }
+
+        if (costmap->getCost(costmap->getSizeInCellsX()-1,i) == costmap_2d::FREE_SPACE){
+        	 costmap->mapToWorld(costmap->getSizeInCellsX()-1,i,p_x,p_y);
+        	 distancia = (p_x - goal_x)*(p_x - goal_x) + (p_y -goal_y)*(p_y -goal_y);
+          if (distancia < min_distancia){
+            min_distancia = distancia;
+            indice_goal = costmap->getIndex(costmap->getSizeInCellsY()-1,i);
+          }
+        }
+      }
+    }
+
+    //transformamos las coordenadas de la posición inicial a coordenadas del costmap.
+    double start_x = start.pose.position.x;
+    double start_y = start.pose.position.y;
+    unsigned int mstart_x, mstart_y;
+    costmap->worldToMap(start_x,start_y, mstart_x, mstart_y);
+    unsigned int start_index = costmap->getIndex(mstart_x, mstart_y);
+    unsigned int goal_index = costmap->getIndex(mgoal_x, mgoal_y);
+
+	
+    //*************************************************************************
+    // ya tenemos transformadas las coordenadas del mundo a las del costmap,
+    // ahora hay que implementar la búsqueda de la trayectoria, a partir de aquí.
+    //*************************************************************************
+    ROS_INFO("VOY A LLAMAR AL A ESTRELLA");
+    plan = A_estrella(start_index, goal_index, costmap_ros);
+    }
+    
+
+/*bool localPlanner(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan, costmap_2d::Costmap2DROS *costmap_ros){
 
 
     ROS_INFO("localPlanner: Got a start: %.2f, %.2f, and a goal: %.2f, %.2f", start.pose.position.x, start.pose.position.y, goal.pose.position.x, goal.pose.position.y);
@@ -162,15 +404,15 @@ bool localPlanner(const geometry_msgs::PoseStamped& start, const geometry_msgs::
 
     }
 
-  }
+  }*/
 
 //consultado en http://wiki.ros.org/actionlib_tutorials/Tutorials/SimpleActionClient%28Threaded%29
 
 
 void feedbackCBGoal0(const move_base_msgs::MoveBaseFeedbackConstPtr &feedback){
 
-  double pos_x = MoveBaseFeedbackConstPtr->base_position.pose.position.x;
-  double pos_y = MoveBaseFeedbackConstPtr->base_position.pose.position.y;
+  double pos_x = feedback->base_position.pose.position.x;
+  double pos_y = feedback->base_position.pose.position.y;
 
   if(pos_x == prev_pos_x && pos_y == prev_pos_y)
     tiempo_parado++;
@@ -183,7 +425,7 @@ void feedbackCBGoal0(const move_base_msgs::MoveBaseFeedbackConstPtr &feedback){
   prev_pos_y = pos_y;
 
   ROS_INFO("Estoy en la posición:(%f, %f), distancia: %f", pos_x, pos_y,
-          sqrt((pos_x - goal_x) * (pos_x - goal_x) + (pos_y - goal_y) * (pos_y - goal_y));
+          sqrt((pos_x - goal_x) * (pos_x - goal_x) + (pos_y - goal_y) * (pos_y - goal_y)));
 }
 
 void doneCBGoal0(const actionlib::SimpleClientGoalState& estado, const move_base_msgs::MoveBaseResultConstPtr &resultado){
@@ -259,13 +501,16 @@ int main(int argc, char** argv) {
   goal.target_pose.pose.position.x =	0.00;//-18.174;
   goal.target_pose.pose.position.y =	0.00;//25.876;
   goal.target_pose.pose.orientation.w =	1;
+  
+  goal_x = 0.00;
+  goal_y = 0.00;
 
   ROS_INFO("Enviando el objetivo");
 
   goals.push_back(goal); //Definir como global
 
   while(!goals.empty()){
-    ac.sendGoals(goals.back(),doneCBGoal0(),activeCBGoal0(),feedbackCBGoal0());
+    ac.sendGoal(goals.back(),&doneCBGoal0,&activeCBGoal0,&feedbackCBGoal0);
 
     bool finalizado = false;
 
@@ -286,8 +531,8 @@ int main(int argc, char** argv) {
       if (ac.getState() == actionlib::SimpleClientGoalState::PREEMPTED){
         ROS_INFO("Objetivo cancelado");
 
-        geometry_msgs::PoseStamped& start, goal;
-        vector<geometry_msgs::PoseStamped>& plan;
+        geometry_msgs::PoseStamped start, goal;
+        vector<geometry_msgs::PoseStamped> plan;
 
         rellenaPoseStamped (prev_pos_x, prev_pos_y, start, localcostmap);
         rellenaPoseStamped (goals.back().target_pose.pose.position.x, goals.back().target_pose.pose.position.y, goal, localcostmap);
@@ -316,7 +561,7 @@ int main(int argc, char** argv) {
     }
     else if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED){
       ROS_INFO("¡¡ Objetivo alcanzado !!");
-      goals.pop_back()
+      goals.pop_back();
     }
     else{
       ROS_INFO("Se ha fallado por alguna razón.");
