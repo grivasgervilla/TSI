@@ -1,0 +1,24 @@
+<launch>
+  <master auto="start"/>
+  <param name="/use_sim_time" value="true"/>
+
+   <node name="map_server" pkg="map_server" type="map_server" args="$(find miscostmaps)/maps/simple_rooms.yaml" respawn="false"/>
+
+
+  <node pkg="stage_ros" type="stageros" name="stageros" args="$(find mistage1516)/configuracion/mundos/mi-simplerooms.world" respawn="false">
+              <param name="base_watchdog_timeout" value="0.2"/>
+        </node>
+
+
+  <node name="nodo_servidor" pkg="action_lib_costmaps" type="pfplanner_lite_node" output="screen" />
+  <node name="fake_localization" pkg="fake_localization" type="fake_localization" respawn="false" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find navigation_stage)/single_robot.rviz" />
+
+ <node name="nodo_cliente" pkg="action_lib_costmaps" type="send_goals_lite_node" output ="screen">
+          <rosparam file="$(find miscostmaps)/configuration/costmap_common_params.yaml" command="load" ns="global_costmap" />
+          <rosparam file="$(find miscostmaps)/configuration/costmap_common_params.yaml" command="load" ns="local_costmap" />
+          <rosparam file="$(find miscostmaps)/configuration/local_costmap_params.yaml"  command="load" />
+          <rosparam file="$(find miscostmaps)/configuration/global_costmap_params.yaml" command="load" />
+
+   </node>
+</launch>
