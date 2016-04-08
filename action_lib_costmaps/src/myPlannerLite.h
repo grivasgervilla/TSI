@@ -31,6 +31,8 @@ class LocalPlanner
         Tupla delta;    //Componente total
         double v_angular; //velocidad angular
         double v_lineal;  //velocidad lineal
+	int veces_block = 0;  //veces que se ha quedado bloqueado
+	bool espera_plan = false;
         std::vector<Tupla> posObs;    //Vector que contiene las posiciones de los obstáculos.
                                         //Calculado en scanCallback.
         nav_msgs::Odometry odometria;      //guarda el último mensaje de odometría recibido
@@ -58,32 +60,39 @@ class LocalPlanner
         void getOneDeltaRepulsivo(Tupla posO, Tupla &deltaO);
         void setTotalRepulsivo();
         void setDeltaTotal(){
-        		double modulo_goal, modulo_obst;
-        		
-        		if (norm(deltaObst) < 0.00001)
-        			status_block = false;        			
-       
-            delta.x = deltaGoal.x + deltaObst.x;
-            delta.y = deltaGoal.y + deltaObst.y;
-            
-            modulo_goal = norm(deltaGoal);
-            modulo_obst = norm(deltaObst);
-            
-            if (modulo_obst > 3*modulo_goal and !status_suicida) {
-            	status_suicida = true;
-            	dir_salvamento.x = delta.x;
-            	dir_salvamento.y = delta.y;
-            }
-            
-            if (norm(delta) < 0.00001 and norm(deltaObst) >= 0.00001)
-            	status_block = true;
-            
-            if (status_block) {
-            	delta.x = deltaObst.x;
-            	delta.y = deltaObst.y;
-            }
-            
-            };
+		double modulo_goal, modulo_obst;
+				
+		if (norm(deltaObst) < 0.00001 && status_block){
+			status_block = false;   
+			veces_block++;
+		}     			
+	       
+		delta.x = deltaGoal.x + deltaObst.x;
+		delta.y = deltaGoal.y + deltaObst.y;
+
+		modulo_goal = norm(deltaGoal);
+		modulo_obst = norm(deltaObst);
+
+		if (modulo_obst > 10*modulo_goal and !status_suicida) {
+			status_suicida = true;
+			dir_salvamento.x = delta.x;
+			dir_salvamento.y = delta.y;
+		}
+
+		if (norm(delta) < 0.00001 and norm(deltaObst) >= 0.00001){
+			status_block = true;
+
+		}
+
+		if (status_block) {
+			delta.x = deltaObst.x;
+			delta.y = deltaObst.y;
+		}
+		if (veces_block > 2){
+			veces_block = 0;
+			espera_plan = true; 
+		}      
+	};
         void setv_Angular();
         void setv_Lineal();
         

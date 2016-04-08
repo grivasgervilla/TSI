@@ -76,6 +76,7 @@ public:
 
         //Le pasamos al planner el objetivo recibido!!!
         planner.setGoal(goal);
+	planner.espera_plan = false;
 
         //procesamiento del goal
         bool success = true;
@@ -104,19 +105,20 @@ public:
                      goal->target_pose.pose.position.y,
                      goal->target_pose.pose.orientation.w );
 
-            ROS_INFO("Estoy en la posición:(%f, %f), yaw: %f", planner.pos.x, planner.pos.y,planner.yaw);
+            //ROS_INFO("Estoy en la posición:(%f, %f), yaw: %f", planner.pos.x, planner.pos.y,planner.yaw);
             planner.setDeltaAtractivo();
             //********************************************************
             //aquí habrá que mejorar el navegador local para que evite obstáculos
             //con el componente repulsivo
             //****************************************************************
-            planner.setDeltaTotal();
+            planner.setTotalRepulsivo();
+	    planner.setDeltaTotal();
             planner.setv_Angular();
             planner.setv_Lineal();
             if (planner.goalAchieved())
                 break;
             planner.setSpeed();
-            ROS_INFO("Enviando velocidad (%f,%f)", planner.v_lineal, planner.v_angular);
+            //ROS_INFO("Enviando velocidad (%f,%f)", planner.v_lineal, planner.v_angular);
 
             //Informar del feedback. Consiste en obtener información
             //de la odometría y pasarla al formato de MoveBaseFeedback
@@ -129,10 +131,10 @@ public:
             feedback.base_position.pose.position.y = planner.odometria.pose.pose.position.y;
             feedback.base_position.pose.orientation.w = planner.odometria.pose.pose.orientation.w;
 
-            ROS_INFO("...con feedback (%f,%f,%f)",
-                     feedback.base_position.pose.position.x,
-                     feedback.base_position.pose.position.y,
-                     feedback.base_position.pose.orientation.w);
+            //ROS_INFO("...con feedback (%f,%f,%f)",
+                  //   feedback.base_position.pose.position.x,
+                  //   feedback.base_position.pose.position.y,
+                  //   feedback.base_position.pose.orientation.w);
 
             as.publishFeedback(feedback);
             rate.sleep();

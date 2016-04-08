@@ -18,7 +18,7 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 double prev_pos_x,prev_pos_y, goal_x, goal_y;
 bool condicion_parada;
 int tiempo_parado = 0;
-const int TOPE_TIEMPO_PARADO = 500;
+const int TOPE_TIEMPO_PARADO = 25;
 
 //imprime en pantalla el contendio de un costmap
 void printCostmap (costmap_2d::Costmap2DROS * costmap_ros) {
@@ -178,15 +178,15 @@ vector<geometry_msgs::PoseStamped> fabricarCamino(vector<Nodo> &cerrados, unsign
 	   		fin = true;	   
 	   }
 	   
-	   idx_camino.push_back(start);
+	   //idx_camino.push_back(start);
 		
 		//Creamos el camino de PoseStamped de principio a fin
 		vector<geometry_msgs::PoseStamped> camino (idx_camino.size());
 		
-		for (int i = idx_camino.size()-1; i >= 0; i--) {
+		for (int i = 0; i < idx_camino.size(); i++) {
 			costmap->indexToCells(idx_camino.at(i), mx, my);
 			costmap->mapToWorld(mx, my, wx, wy);
-			rellenaPoseStamped(wx, wy, camino.at(camino.size()-i-1), costmap_ros);		
+			rellenaPoseStamped(wx, wy, camino.at(i), costmap_ros);		
 		
 		}
 		
@@ -239,7 +239,7 @@ std::vector<geometry_msgs::PoseStamped> A_estrella(unsigned int start, unsigned 
 	if (fin)
 		camino = fabricarCamino(cerrados, start, costmap_ros);	
 	
-	
+	ROS_INFO("La longitud del camino devuelto es: %d", camino.size());
 	return camino;	
 }
 
@@ -424,8 +424,8 @@ void feedbackCBGoal0(const move_base_msgs::MoveBaseFeedbackConstPtr &feedback){
   prev_pos_x = pos_x;
   prev_pos_y = pos_y;
 
-  ROS_INFO("Estoy en la posición:(%f, %f), distancia: %f", pos_x, pos_y,
-          sqrt((pos_x - goal_x) * (pos_x - goal_x) + (pos_y - goal_y) * (pos_y - goal_y)));
+ // ROS_INFO("Estoy en la posición:(%f, %f), distancia: %f", pos_x, pos_y,
+       //   sqrt((pos_x - goal_x) * (pos_x - goal_x) + (pos_y - goal_y) * (pos_y - goal_y)));
 }
 
 void doneCBGoal0(const actionlib::SimpleClientGoalState& estado, const move_base_msgs::MoveBaseResultConstPtr &resultado){
@@ -538,7 +538,7 @@ int main(int argc, char** argv) {
         rellenaPoseStamped (goals.back().target_pose.pose.position.x, goals.back().target_pose.pose.position.y, goal, localcostmap);
         //planificar nuevos goals
         localPlanner(start,goal, plan, localcostmap);
-
+	condicion_parada = false;
         for (int i = 0; i < plan.size(); i++){
           move_base_msgs::MoveBaseGoal goal;
 
@@ -548,7 +548,7 @@ int main(int argc, char** argv) {
           goal.target_pose.pose.position.x =plan.at(i).pose.position.x;
           goal.target_pose.pose.position.y =plan.at(i).pose.position.y;
           goal.target_pose.pose.orientation.w =	1;
-
+	  ROS_INFO("Vamos a insertar la sol (%f, %f)", goal.target_pose.pose.position.x,goal.target_pose.pose.position.y);
           goals.push_back(goal);
         }
       }
@@ -560,7 +560,7 @@ int main(int argc, char** argv) {
       }
     }
     else if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED){
-      ROS_INFO("¡¡ Objetivo alcanzado !!");
+      ROS_INFO("¡¡ Objetivo intermedio alcanzado !!");
       goals.pop_back();
     }
     else{

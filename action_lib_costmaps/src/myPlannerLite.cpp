@@ -9,7 +9,7 @@ LocalPlanner::LocalPlanner()
 {
 
     CAMPOATT.radius = 0.01; CAMPOATT.spread = 3.5; CAMPOATT.intens = 0.05; //Parámetros de configuración (radio, spread, alpha) del campo actractivo.
-    CAMPOREP.radius = 0.01; CAMPOREP.spread = 1.0; CAMPOREP.intens = 0.04;//0.01Parámetros de configuración (radio, spread, beta)del campo repulsivo.
+    CAMPOREP.radius = 0.01; CAMPOREP.spread = 1.25; CAMPOREP.intens = 0.025;//0.01Parámetros de configuración (radio, spread, beta)del campo repulsivo.
     posGoal.x = posGoal.y = 0;  //Posición del objetivo
     pos.x = pos.y = 0;      //Posición actual
     yaw =0;     //Angulo (en radianes) de orientación del robot
@@ -53,7 +53,7 @@ void LocalPlanner::odomCallBack(const nav_msgs::Odometry::ConstPtr& msg)
 
     //convierto el quaternion en radianes y guardo el yaw en LocalPlanner::yaw
     yaw=atan2(2*(y*x+w*z),w*w+x*x-y*y-z*z);
-    ROS_INFO("POSE: %f %f %f",xPos,yPos,yaw);
+    //ROS_INFO("POSE: %f %f %f",xPos,yPos,yaw);
 };
 
 void LocalPlanner::setDeltaAtractivo() {
@@ -130,7 +130,7 @@ void LocalPlanner::scanCallBack(const sensor_msgs::LaserScan::ConstPtr& scan)
 		Tupla obstaculo;
 		obstaculo.x =pos.x + scan->ranges[currIndex]*cos(yaw+bearing);
 		obstaculo.y =pos.y + scan->ranges[currIndex]*sin(yaw+bearing);
-		ROS_INFO("Obstaculo %d en posición (%f,%f)",currIndex,obstaculo.x, obstaculo.y);
+		//ROS_INFO("Obstaculo %d en posición (%f,%f)",currIndex,obstaculo.x, obstaculo.y);
 		posObs.push_back(obstaculo);
 		bearing += scan->angle_increment;
 		}
@@ -173,7 +173,7 @@ void LocalPlanner::setv_Angular(){
 void LocalPlanner::setv_Lineal(){
 //calcula la velocidad lineal
     v_lineal =  sqrt(delta.x*delta.x + delta.y*delta.y);
-    if (status_suicida)
+    if (status_suicida || espera_plan)
     	v_lineal = 0.0; //no avanzo
     }
 bool LocalPlanner::goalAchieved(){
