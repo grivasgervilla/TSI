@@ -76,7 +76,8 @@ public:
 
         //Le pasamos al planner el objetivo recibido!!!
         planner.setGoal(goal);
-	planner.espera_plan = false;
+	      planner.espera_plan = false;
+        planner.status_block = false;
 
         //procesamiento del goal
         bool success = true;
@@ -112,7 +113,7 @@ public:
             //con el componente repulsivo
             //****************************************************************
             planner.setTotalRepulsivo();
-	    planner.setDeltaTotal();
+	          planner.setDeltaTotal();
             planner.setv_Angular();
             planner.setv_Lineal();
             if (planner.goalAchieved())

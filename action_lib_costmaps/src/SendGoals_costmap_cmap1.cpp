@@ -15,9 +15,8 @@ using namespace std;
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
-double prev_pos_x,prev_pos_y, goal_x, goal_y;
+double prev_pos_x,prev_pos_y, goal_x, goal_y, prev_yaw;
 bool condicion_parada;
-bool flag_guarro = false;
 int tiempo_parado = 0;
 const int TOPE_TIEMPO_PARADO = 25;
 
@@ -55,7 +54,7 @@ std::vector <unsigned int> findFreeNeighborCell (unsigned int CellID, costmap_2d
         for (int x=-1;x<=1;x++)
           for (int y=-1; y<=1;y++){
             //comprobar si el índice es válido
-           if ((mx+x>=0)&&(mx+x < costmap->getSizeInCellsX())&&(my+y >=0 )&&(my+y < costmap->getSizeInCellsY())){
+             if ((mx+x>=0)&&(mx+x < costmap->getSizeInCellsX())&&(my+y >=0 )&&(my+y < costmap->getSizeInCellsY())){
 
               ROS_WARN("Index valid!!!!! costmap[%d,%d] = %d", mx+x,my+y,costmap->getCost(mx+x,my+y));
               if(costmap->getCost(mx+x,my+y) == costmap_2d::FREE_SPACE   && (!(x==0 && y==0))){
@@ -167,12 +166,12 @@ vector<geometry_msgs::PoseStamped> fabricarCamino(vector<Nodo> &cerrados, unsign
 
 	//Creamos un camino dado por indices desde el final al principio
 	unsigned int padre = cerrados.at(cerrados.size()-1).padre;
-	idx_camino.push_back(cerrados.size()-1);
+	idx_camino.push_back(cerrados.back().id);
 
 	while (!fin) {
 		idx_padre = findNodo(padre, cerrados);
 
-		idx_camino.push_back(idx_padre);
+		idx_camino.push_back(cerrados.at(idx_padre).id);
 		padre = cerrados.at(idx_padre).padre;
 
 		if (padre == start)
@@ -186,7 +185,9 @@ vector<geometry_msgs::PoseStamped> fabricarCamino(vector<Nodo> &cerrados, unsign
 
 	for (int i = 0; i < idx_camino.size(); i++) {
 		costmap->indexToCells(idx_camino.at(i), mx, my);
+    ROS_INFO("Mete en el camino los indices: %d,%d",mx,my);
 		costmap->mapToWorld(mx, my, wx, wy);
+    ROS_INFO("En el mundo son: %f,%f",wx,wy);
 		rellenaPoseStamped(wx, wy, camino.at(i), costmap_ros);
 
 	}
@@ -212,7 +213,7 @@ std::vector<geometry_msgs::PoseStamped> A_estrella(unsigned int start, unsigned 
      	for (int x=0 ;x < costmap->getSizeInCellsX() ;x++)
           for (int y= 0; y < costmap->getSizeInCellsY();y++){
               ROS_INFO("%d",costmap->getCost(x,y));
-            }
+          }
 	unsigned int mx, my;
 	costmap->indexToCells(goal, mx, my);
 	ROS_INFO("mi goal es %d, %d", mx, my);
@@ -383,8 +384,9 @@ void feedbackCBGoal0(const move_base_msgs::MoveBaseFeedbackConstPtr &feedback){
 
   double pos_x = feedback->base_position.pose.position.x;
   double pos_y = feedback->base_position.pose.position.y;
+  double yaw = feedback->base_position.pose.orientation.w;
 
-  if(pos_x == prev_pos_x && pos_y == prev_pos_y)
+  if(pos_x == prev_pos_x && pos_y == prev_pos_y && yaw == prev_yaw)
     tiempo_parado++;
   else tiempo_parado = 0;
 
@@ -393,6 +395,7 @@ void feedbackCBGoal0(const move_base_msgs::MoveBaseFeedbackConstPtr &feedback){
 
   prev_pos_x = pos_x;
   prev_pos_y = pos_y;
+  prev_yaw = yaw;
 
  // ROS_INFO("Estoy en la posición:(%f, %f), distancia: %f", pos_x, pos_y,
        //   sqrt((pos_x - goal_x) * (pos_x - goal_x) + (pos_y - goal_y) * (pos_y - goal_y)));
@@ -488,15 +491,13 @@ int main(int argc, char** argv) {
     while(!finalizado && !condicion_parada){
       ROS_INFO("La variable finalizado vale %d", finalizado);
       finalizado = ac.waitForResult(ros::Duration(1.0));
-      if (flag_guarro)
-        condicion_parada = false;
     }
     ROS_WARN("Después del while");
 
     if (condicion_parada){
       ROS_WARN("Entramos por condición de parada");
       if(goals.size()>1){
-        ROS_WARN("Se ha fallado por alguna razón al cancelar.");
+        ROS_WARN("Se ha fallado por alguna razón el segundo objetivo.");
         ros::shutdown();
         spin_thread.join();
         return 0;
@@ -516,15 +517,15 @@ int main(int argc, char** argv) {
         //planificar nuevos goals
         localPlanner(start,goal, plan, localcostmap);
 	      condicion_parada = false;
-        flag_guarro = true;
+        tiempo_parado = 0;
         for (int i = 0; i < plan.size(); i++){
           move_base_msgs::MoveBaseGoal goal;
 
           goal.target_pose.header.frame_id = 	"map";
           goal.target_pose.header.stamp =	ros::Time::now();
 
-          goal.target_pose.pose.position.x =plan.at(i).pose.position.x + prev_pos_x;
-          goal.target_pose.pose.position.y =plan.at(i).pose.position.y + prev_pos_y;
+          goal.target_pose.pose.position.x = -plan.at(i).pose.position.x + prev_pos_x;
+          goal.target_pose.pose.position.y = plan.at(i).pose.position.y + prev_pos_y;
           goal.target_pose.pose.orientation.w =	1;
 	        ROS_INFO("Vamos a insertar la sol (%f, %f)", goal.target_pose.pose.position.x,goal.target_pose.pose.position.y);
           goals.push_back(goal);

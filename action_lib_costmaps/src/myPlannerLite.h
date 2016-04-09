@@ -31,15 +31,15 @@ class LocalPlanner
         Tupla delta;    //Componente total
         double v_angular; //velocidad angular
         double v_lineal;  //velocidad lineal
-        double tolerancia_llegada = 0.0;
-	int veces_block = 0;  //veces que se ha quedado bloqueado
-	bool espera_plan = false;
+        bool flag_mucho_giro;
+      	int veces_block = 0;  //veces que se ha quedado bloqueado
+      	bool espera_plan = false;
         std::vector<Tupla> posObs;    //Vector que contiene las posiciones de los obstáculos.
                                         //Calculado en scanCallback.
         nav_msgs::Odometry odometria;      //guarda el último mensaje de odometría recibido
-		  bool status_suicida = false; //lo ponemos a true si el robot entra en la zona donde tiene a suicidarse
-		  bool status_block = false;
-		  Tupla dir_salvamento;
+  		  bool status_suicida = false; //lo ponemos a true si el robot entra en la zona donde tiene a suicidarse
+  		  bool status_block = false;
+  		  Tupla dir_salvamento;
 
         PFConf CAMPOATT;// = {0.01,3,5,0.07};//Parámetros de configuración (radio, spread, alpha) del campo actractivo.
         PFConf CAMPOREP;//(0,01,1,0,01);//Parámetros de configuración (radio, spread, beta)del campo repulsivo.
@@ -48,66 +48,78 @@ class LocalPlanner
                               //en la posición objetivo (ver setDeltaAtractivo)
         const static double V_ANGULAR_CTE = M_PI/8;  //Valor de la velocidad angular constante.
         const static double EPSILON_ANGULAR = 0.0009; //Valor a partir del cual entendemos que el robot está en la orientación deseada
-        const static double MIN_SCAN_ANGLE_RAD = -90.0/180*M_PI;
-        const static double MAX_SCAN_ANGLE_RAD = +90.0/180*M_PI;
+        const static double MIN_SCAN_ANGLE_RAD = -135.0/180*M_PI;
+        const static double MAX_SCAN_ANGLE_RAD = +135.0/180*M_PI;
         LocalPlanner(); //constructor.
+
         void setGoal(const move_base_msgs::MoveBaseGoalConstPtr& goal) {
             posGoal.x = goal->target_pose.pose.position.x;
             posGoal.y = goal->target_pose.pose.position.y;
-            }
+        }
 
         bool goalAchieved();    //Devuelve true cuando se ha alcanzado el objetivo
         void setDeltaAtractivo();
         void getOneDeltaRepulsivo(Tupla posO, Tupla &deltaO);
         void setTotalRepulsivo();
         void setDeltaTotal(){
-		double modulo_goal, modulo_obst;
+      		double modulo_goal, modulo_obst;
 
-		if (norm(deltaObst) < 0.00001 && status_block){
-			status_block = false;
-			veces_block++;
-		}
+      		if (norm(deltaObst) < 0.00001 && status_block){
+            ROS_WARN("Salimos del bloqueo, OLE");
+            ROS_WARN("Salimos del bloqueo, OLE");
+            ROS_WARN("Salimos del bloqueo, OLE");
+            ROS_WARN("Salimos del bloqueo, OLE");
+      			status_block = false;
+      			veces_block++;
+      		}
 
-		delta.x = deltaGoal.x + deltaObst.x;
-		delta.y = deltaGoal.y + deltaObst.y;
+      		delta.x = deltaGoal.x + deltaObst.x;
+      		delta.y = deltaGoal.y + deltaObst.y;
 
-		modulo_goal = norm(deltaGoal);
-		modulo_obst = norm(deltaObst);
+      		modulo_goal = norm(deltaGoal);
+      		modulo_obst = norm(deltaObst);
 
-		if (modulo_obst > 10*modulo_goal and !status_suicida) {
-			status_suicida = true;
-			dir_salvamento.x = delta.x;
-			dir_salvamento.y = delta.y;
-		}
+      		if (modulo_obst > 10*modulo_goal and !status_suicida) {
+      			status_suicida = true;
+      			dir_salvamento.x = delta.x;
+      			dir_salvamento.y = delta.y;
+      		}
 
-		if (norm(delta) < 0.00001 and norm(deltaObst) >= 0.00001){
-			status_block = true;
+          ROS_INFO("LA NORMA DE DELTA VALE: %f", norm(delta));
+      		if (norm(delta) < 0.075 && norm(deltaObst) >= 0.00001){
+            ROS_WARN("LENTO LENTO");
+            ROS_WARN("LENTO LENTO");
+            ROS_WARN("LENTO LENTO");
+            ROS_WARN("LENTO LENTO");
+            ROS_WARN("LENTO LENTO");
+      			status_block = true;
+      		}
 
-		}
+      		if (status_block && !espera_plan) {
+      			delta.x = deltaObst.x;
+      			delta.y = deltaObst.y;
+      		}
 
-		if (status_block) {
-			delta.x = deltaObst.x;
-			delta.y = deltaObst.y;
-		}
-		if (veces_block > 2){
-			veces_block = 0;
-			espera_plan = true;
-		}
-	};
+      		if (veces_block > 0 && status_block){
+      			veces_block = 0;
+      			espera_plan = true;
+      		}
+    	};
         void setv_Angular();
         void setv_Lineal();
 
         double distancia(Tupla src, Tupla dst) {
             return sqrt((src.x - dst.x) * (src.x - dst.x) +
                         (src.y - dst.y) * (src.y - dst.y));
-            }
+        }
+
         void setSpeed() {
         //rellenar y enviar Twist.
             geometry_msgs::Twist mensajeTwist;
             mensajeTwist.linear.x = v_lineal;
             mensajeTwist.angular.z =v_angular;
             commandPub.publish(mensajeTwist);
-            }
+        }
 
     protected:
     private:
@@ -118,6 +130,7 @@ class LocalPlanner
 
         void scanCallBack(const sensor_msgs::LaserScan::ConstPtr& scan);
         void odomCallBack(const nav_msgs::Odometry::ConstPtr& msg);
+
         double norm (Tupla p) {
         		return sqrt(p.x*p.x+p.y*p.y);
         }

@@ -8,8 +8,8 @@ using namespace std;
 LocalPlanner::LocalPlanner()
 {
 
-    CAMPOATT.radius = 0.01; CAMPOATT.spread = 3.5; CAMPOATT.intens = 0.05; //Parámetros de configuración (radio, spread, alpha) del campo actractivo.
-    CAMPOREP.radius = 0.01; CAMPOREP.spread = 1.25; CAMPOREP.intens = 0.025;//0.01Parámetros de configuración (radio, spread, beta)del campo repulsivo.
+    CAMPOATT.radius = 0.01; CAMPOATT.spread = 0.5; CAMPOATT.intens = 0.7; //Parámetros de configuración (radio, spread, alpha) del campo actractivo.
+    CAMPOREP.radius = 0.01; CAMPOREP.spread = 1.0; CAMPOREP.intens = 0.025;//0.01Parámetros de configuración (radio, spread, beta)del campo repulsivo.
     posGoal.x = posGoal.y = 0;  //Posición del objetivo
     pos.x = pos.y = 0;      //Posición actual
     yaw =0;     //Angulo (en radianes) de orientación del robot
@@ -65,7 +65,7 @@ void LocalPlanner::setDeltaAtractivo() {
         deltaGoal.x = deltaGoal.y = 0;
         return;
         }
-    if ( (CAMPOATT.radius < d) and (d < (CAMPOATT.spread - CAMPOATT.radius ))){
+    if ( (CAMPOATT.radius < d) and (d < (CAMPOATT.spread + CAMPOATT.radius ))){
         deltaGoal.x = CAMPOATT.intens *(d - CAMPOATT.radius)*cos(theta);
         deltaGoal.y = CAMPOATT.intens *(d - CAMPOATT.radius)*sin(theta);
         return;
@@ -156,28 +156,37 @@ void LocalPlanner::setv_Angular(){
     	diferencia_normalizada = normalize(angulo-yaw);
     }
 
-
+   flag_mucho_giro = false;
 	 if ((0 <= diferencia_normalizada) and (diferencia_normalizada <= M_PI))
-	     if (diferencia_normalizada > V_ANGULAR_CTE)
+	     if (diferencia_normalizada > V_ANGULAR_CTE){
 	         v_angular = V_ANGULAR_CTE;
+           flag_mucho_giro = true;
+       }
 	     else v_angular = (diferencia_normalizada < EPSILON_ANGULAR)? 0: diferencia_normalizada;
 	 else
-	     if (diferencia_normalizada < (-1)*V_ANGULAR_CTE)
+	     if (diferencia_normalizada < (-1)*V_ANGULAR_CTE){
 	         v_angular = (-1)*V_ANGULAR_CTE;
+           flag_mucho_giro = true;
+       }
 	     else v_angular = (diferencia_normalizada > (-1)*EPSILON_ANGULAR)? 0: diferencia_normalizada;
 
 	if(v_angular == 0)
 		status_suicida = false;
 
+  if (espera_plan)
+    v_angular = 0;
+
 }
 void LocalPlanner::setv_Lineal(){
 //calcula la velocidad lineal
     v_lineal =  sqrt(delta.x*delta.x + delta.y*delta.y);
+    if (flag_mucho_giro)
+      v_lineal = v_lineal*0.25;
     if (status_suicida || espera_plan)
     	v_lineal = 0.0; //no avanzo
     }
 bool LocalPlanner::goalAchieved(){
 
-//determina que el objetivo se ha alcanzado cuando ambas velocidades son 0.
-    return (distancia(posGoal, pos)<1);
-    }
+    //determina que el objetivo se ha alcanzado cuando ambas velocidades son 0.
+    return (distancia(posGoal, pos)<0.5);
+}
