@@ -31,6 +31,7 @@ class LocalPlanner
         Tupla delta;    //Componente total
         double v_angular; //velocidad angular
         double v_lineal;  //velocidad lineal
+        double tolerancia_llegada = 0.0;
 	int veces_block = 0;  //veces que se ha quedado bloqueado
 	bool espera_plan = false;
         std::vector<Tupla> posObs;    //Vector que contiene las posiciones de los obstáculos.
@@ -39,7 +40,7 @@ class LocalPlanner
 		  bool status_suicida = false; //lo ponemos a true si el robot entra en la zona donde tiene a suicidarse
 		  bool status_block = false;
 		  Tupla dir_salvamento;
-		  
+
         PFConf CAMPOATT;// = {0.01,3,5,0.07};//Parámetros de configuración (radio, spread, alpha) del campo actractivo.
         PFConf CAMPOREP;//(0,01,1,0,01);//Parámetros de configuración (radio, spread, beta)del campo repulsivo.
         //CAMPOREP.radius = 0.0001; //nuevo radio del campo repulsivo
@@ -61,12 +62,12 @@ class LocalPlanner
         void setTotalRepulsivo();
         void setDeltaTotal(){
 		double modulo_goal, modulo_obst;
-				
+
 		if (norm(deltaObst) < 0.00001 && status_block){
-			status_block = false;   
+			status_block = false;
 			veces_block++;
-		}     			
-	       
+		}
+
 		delta.x = deltaGoal.x + deltaObst.x;
 		delta.y = deltaGoal.y + deltaObst.y;
 
@@ -90,12 +91,12 @@ class LocalPlanner
 		}
 		if (veces_block > 2){
 			veces_block = 0;
-			espera_plan = true; 
-		}      
+			espera_plan = true;
+		}
 	};
         void setv_Angular();
         void setv_Lineal();
-        
+
         double distancia(Tupla src, Tupla dst) {
             return sqrt((src.x - dst.x) * (src.x - dst.x) +
                         (src.y - dst.y) * (src.y - dst.y));

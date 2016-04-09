@@ -85,11 +85,11 @@ void LocalPlanner::getOneDeltaRepulsivo(Tupla posObst, Tupla &deltaO){
 //CAMPOREP.radius = 0.02; CAMPOREP.spread = 1.0; CAMPOREP.intens = 0.01;
     double d = distancia(posObst, pos);
     double theta = atan2(posObst.y - pos.y, posObst.x - pos.x);
-	 
+
     if (d < CAMPOREP.radius){
         deltaO.x = -500000 * cos(theta);
         deltaO.y = -500000 * sin(theta);
-        
+
     }
     else if (d > CAMPOREP.radius + CAMPOREP.spread)
         deltaO.x = deltaO.y = 0;
@@ -102,7 +102,7 @@ void LocalPlanner::getOneDeltaRepulsivo(Tupla posObst, Tupla &deltaO){
 void LocalPlanner::setTotalRepulsivo(){
 //Calcula la componente total repulsiva como suma de las componentes repulsivas para cada obstáculo.
     deltaObst.x = deltaObst.y = 0;
-				
+
     Tupla deltaActual;
     for (int i = 0; i < posObs.size(); i++){
         getOneDeltaRepulsivo(posObs.at(i),deltaActual);
@@ -146,17 +146,17 @@ double normalize(double angle) {
 void LocalPlanner::setv_Angular(){
 //calcula la velocidad angular
     double angulo, diferencia_normalizada;
-	
+
 	 if (status_suicida) {
 		 angulo = atan2(dir_salvamento.y, dir_salvamento.x);
-		 diferencia_normalizada = normalize(angulo - yaw);	
+		 diferencia_normalizada = normalize(angulo - yaw);
 	 }
 	 else {
 	 	angulo = atan2(delta.y, delta.x);
     	diferencia_normalizada = normalize(angulo-yaw);
     }
-	 	
-	
+
+
 	 if ((0 <= diferencia_normalizada) and (diferencia_normalizada <= M_PI))
 	     if (diferencia_normalizada > V_ANGULAR_CTE)
 	         v_angular = V_ANGULAR_CTE;
@@ -167,8 +167,8 @@ void LocalPlanner::setv_Angular(){
 	     else v_angular = (diferencia_normalizada > (-1)*EPSILON_ANGULAR)? 0: diferencia_normalizada;
 
 	if(v_angular == 0)
-		status_suicida = false;	
-	
+		status_suicida = false;
+
 }
 void LocalPlanner::setv_Lineal(){
 //calcula la velocidad lineal
@@ -179,6 +179,5 @@ void LocalPlanner::setv_Lineal(){
 bool LocalPlanner::goalAchieved(){
 
 //determina que el objetivo se ha alcanzado cuando ambas velocidades son 0.
-    return (v_angular == 0 and v_lineal == 0);
+    return (distancia(posGoal, pos)<1);
     }
-
