@@ -65,10 +65,7 @@ class LocalPlanner
       		double modulo_goal, modulo_obst;
 
       		if (norm(deltaObst) < 0.00001 && status_block){
-            ROS_WARN("Salimos del bloqueo, OLE");
-            ROS_WARN("Salimos del bloqueo, OLE");
-            ROS_WARN("Salimos del bloqueo, OLE");
-            ROS_WARN("Salimos del bloqueo, OLE");
+            ROS_WARN("Salimos del bloqueo");
       			status_block = false;
       			veces_block++;
       		}
@@ -87,10 +84,6 @@ class LocalPlanner
 
           ROS_INFO("LA NORMA DE DELTA VALE: %f", norm(delta));
       		if (norm(delta) < 0.075 && norm(deltaObst) >= 0.00001){
-            ROS_WARN("LENTO LENTO");
-            ROS_WARN("LENTO LENTO");
-            ROS_WARN("LENTO LENTO");
-            ROS_WARN("LENTO LENTO");
             ROS_WARN("LENTO LENTO");
       			status_block = true;
       		}
