@@ -17,6 +17,7 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 
 double prev_pos_x,prev_pos_y, goal_x, goal_y;
 bool condicion_parada;
+bool flag_guarro = false;
 int tiempo_parado = 0;
 const int TOPE_TIEMPO_PARADO = 25;
 
@@ -86,7 +87,7 @@ void rellenaPoseStamped (double wx, double wy, geometry_msgs::PoseStamped &pose,
     pose.pose.orientation.z = 0.0;
     pose.pose.orientation.w = 1.0;
     }
-    
+
 struct Nodo {
 	unsigned int id;
 	unsigned int padre;
@@ -99,8 +100,8 @@ Nodo crearNodo(unsigned int id, unsigned int padre, double g, double f) {
 	nuevo.id = id;
 	nuevo.padre = padre;
 	nuevo.g = g;
-	nuevo.f = f;	
-	
+	nuevo.f = f;
+
 	return nuevo;
 }
 
@@ -110,9 +111,9 @@ double h(unsigned int id, unsigned int meta, costmap_2d::Costmap2D *costmap) {
 	unsigned int id_x, id_y, meta_x, meta_y;
 	costmap->indexToCells(id, id_x, id_y);
 	costmap->indexToCells(meta, meta_x, meta_y);
-	
+
 	double dist = sqrt((id_x-meta_x)*(id_x-meta_x)+(id_y-meta_y)*(id_y-meta_y));
-	
+
 	return dist;
 
 }
@@ -120,16 +121,16 @@ double h(unsigned int id, unsigned int meta, costmap_2d::Costmap2D *costmap) {
 Nodo getIdMejor (vector<Nodo> &nodos) {
 	double f_min = 9999999999999999999;
 	int id_min;
-	
+
 	for (int i = 0; i < nodos.size(); i++)
 		if (nodos.at(i).f < f_min) {
 			f_min = nodos.at(i).f;
 			id_min = i;
 		}
-	
+
 	Nodo mejor_nodo = nodos.at(id_min);
 	nodos.erase(nodos.begin() + id_min);
-	
+
 	return mejor_nodo;
 
 }
@@ -138,13 +139,13 @@ vector<Nodo> getHijos (Nodo nodo, unsigned int meta, costmap_2d::Costmap2D *cost
 	vector<unsigned int> hijos_id = findFreeNeighborCell (nodo.id, costmap);
 	vector<Nodo> nodos_hijos;
 	double g,f;
-	
+
 	for (int i = 0; i < hijos_id.size(); i++) {
 		g = nodo.g + 1.0;
 		f = h(hijos_id.at(i), meta, costmap) + g;
 		nodos_hijos.push_back(crearNodo(hijos_id.at(i), nodo.id, g, f));
 	}
-	
+
 	return nodos_hijos;
 }
 
@@ -152,7 +153,7 @@ int findNodo (unsigned int id, vector<Nodo> &nodos) {
 	for (int i = 0; i < nodos.size(); i++)
 		if (nodos.at(i).id == id)
 			return i;
-			
+
 	return -1;
 }
 
@@ -163,38 +164,38 @@ vector<geometry_msgs::PoseStamped> fabricarCamino(vector<Nodo> &cerrados, unsign
 	   double wx, wy;
 		unsigned int mx, my;
 	   costmap_2d::Costmap2D *costmap = costmap_ros->getCostmap();
-	   
+
 	   //Creamos un camino dado por indices desde el final al principio
 	   unsigned int padre = cerrados.at(cerrados.size()-1).padre;
 	   idx_camino.push_back(cerrados.size()-1);
-	   
+
 	   while (!fin) {
 	   	idx_padre = findNodo(padre, cerrados);
-	   	
+
 	   	idx_camino.push_back(idx_padre);
 	   	padre = cerrados.at(idx_padre).padre;
-	   	
+
 	   	if (padre == start)
-	   		fin = true;	   
+	   		fin = true;
 	   }
-	   
+
 	   //idx_camino.push_back(start);
-		
+
 		//Creamos el camino de PoseStamped de principio a fin
 		vector<geometry_msgs::PoseStamped> camino (idx_camino.size());
-		
+
 		for (int i = 0; i < idx_camino.size(); i++) {
 			costmap->indexToCells(idx_camino.at(i), mx, my);
 			costmap->mapToWorld(mx, my, wx, wy);
-			rellenaPoseStamped(wx, wy, camino.at(i), costmap_ros);		
-		
+			rellenaPoseStamped(wx, wy, camino.at(i), costmap_ros);
+
 		}
-		
+
 		return camino;
 
 }
 
-	
+
 std::vector<geometry_msgs::PoseStamped> A_estrella(unsigned int start, unsigned int goal, costmap_2d::Costmap2DROS *costmap_ros) {
 	ROS_INFO("ENTRO EN EL A ESTRELLA");
 	vector<geometry_msgs::PoseStamped> camino;
@@ -202,52 +203,52 @@ std::vector<geometry_msgs::PoseStamped> A_estrella(unsigned int start, unsigned 
 	bool fin = false;
 	Nodo nodo_expand;
 	costmap_2d::Costmap2D *costmap = costmap_ros->getCostmap();
-		
+
 	Nodo inicial = crearNodo(start, 0, 0.0, h(start, goal, costmap));
 	abiertos.push_back(inicial);
-	
+
 	while (!fin && abiertos.size() > 0) {
 		nodo_expand = getIdMejor(abiertos);
-		
+
 		//comprobamos si el nodo extraido es el final
 		if (nodo_expand.id == goal)
 			fin = true;
-		
+
 		//generamos los hijos de este nodo
 		sucesores = getHijos(nodo_expand, goal, costmap);
-		
+
 		for (int i = 0; i < sucesores.size(); i++) {
 			int idx_nodo_en_cerrados = findNodo(sucesores.at(i).id, cerrados);
 			int idx_nodo_en_abiertos = findNodo(sucesores.at(i).id, abiertos);
-			
+
 			if (idx_nodo_en_cerrados == -1 && idx_nodo_en_abiertos == -1) //si el nodo no esta en abiertos ni en cerrados
 				abiertos.push_back(sucesores.at(i));
 			else if (idx_nodo_en_cerrados != -1) //si esta en cerrados
 				if (cerrados.at(idx_nodo_en_cerrados).g > sucesores.at(i).g) //si la g que tenia es peor que la nueva actualizo datos
-					cerrados.at(idx_nodo_en_cerrados) = sucesores.at(i);				
+					cerrados.at(idx_nodo_en_cerrados) = sucesores.at(i);
 			else //esta en abiertos
 				if (abiertos.at(idx_nodo_en_abiertos).g > sucesores.at(i).g) //si la g que tenia es peor que la nueva actualizo datos
-					abiertos.at(idx_nodo_en_abiertos) = sucesores.at(i);	
+					abiertos.at(idx_nodo_en_abiertos) = sucesores.at(i);
 		}
-		
+
 		//introduzco el nodo que acabo de expandir en cerrados
 		cerrados.push_back(nodo_expand);
-	
+
 	}
-	
+
 	//si hemos encontrado solucion la formateamos y devolvemos
 	if (fin)
-		camino = fabricarCamino(cerrados, start, costmap_ros);	
-	
+		camino = fabricarCamino(cerrados, start, costmap_ros);
+
 	ROS_INFO("La longitud del camino devuelto es: %d", camino.size());
-	return camino;	
+	return camino;
 }
 
 
 
 bool localPlanner(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan, costmap_2d::Costmap2DROS *costmap_ros){
 
-
+/*
     ROS_INFO("localPlanner: Got a start: %.2f, %.2f, and a goal: %.2f, %.2f", start.pose.position.x, start.pose.position.y, goal.pose.position.x, goal.pose.position.y);
 
     plan.clear();
@@ -287,7 +288,7 @@ bool localPlanner(const geometry_msgs::PoseStamped& start, const geometry_msgs::
       }
 
       for(int i = 0; i < costmap->getSizeInCellsY(); i++){
-        
+
         if (costmap->getCost(0,i) == costmap_2d::FREE_SPACE){
         	 costmap->mapToWorld(0,i,p_x,p_y);
         	 distancia = (p_x - goal_x)*(p_x - goal_x) + (p_y -goal_y)*(p_y -goal_y);
@@ -316,15 +317,19 @@ bool localPlanner(const geometry_msgs::PoseStamped& start, const geometry_msgs::
     unsigned int start_index = costmap->getIndex(mstart_x, mstart_y);
     unsigned int goal_index = costmap->getIndex(mgoal_x, mgoal_y);
 
-	
+
     //*************************************************************************
     // ya tenemos transformadas las coordenadas del mundo a las del costmap,
     // ahora hay que implementar la búsqueda de la trayectoria, a partir de aquí.
     //*************************************************************************
     ROS_INFO("VOY A LLAMAR AL A ESTRELLA");
-    plan = A_estrella(start_index, goal_index, costmap_ros);
+    plan = A_estrella(start_index, goal_index, costmap_ros);*/
+
+    geometry_msgs::PoseStamped pose;
+    rellenaPoseStamped(9,0,pose,costmap_ros);//Es el Costmap2DROS
+    plan.push_back(pose);
     }
-    
+
 
 /*bool localPlanner(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan, costmap_2d::Costmap2DROS *costmap_ros){
 
@@ -501,7 +506,7 @@ int main(int argc, char** argv) {
   goal.target_pose.pose.position.x =	0.00;//-18.174;
   goal.target_pose.pose.position.y =	0.00;//25.876;
   goal.target_pose.pose.orientation.w =	1;
-  
+
   goal_x = 0.00;
   goal_y = 0.00;
 
@@ -514,20 +519,27 @@ int main(int argc, char** argv) {
 
     bool finalizado = false;
 
+    ROS_WARN("Antes del while");
     while(!finalizado && !condicion_parada){
+      ROS_INFO("La variable finalizado vale %d", finalizado);
       finalizado = ac.waitForResult(ros::Duration(1.0));
+      if (flag_guarro)
+        condicion_parada = false;
     }
+    ROS_WARN("Después del while");
 
     if (condicion_parada){
+      ROS_WARN("Entramos por condición de parada");
       if(goals.size()>1){
-        ROS_INFO("Se ha fallado por alguna razón al cancelar.");
+        ROS_WARN("Se ha fallado por alguna razón al cancelar.");
         ros::shutdown();
         spin_thread.join();
         return 0;
       }
       ac.cancelGoal();
-
+      ROS_WARN("Hemos cancelado el goal, pasamos a esperar 10 segundos");
       ac.waitForResult(ros::Duration(10.0));
+      ROS_WARN("YA HEMOS TERMINADO DE ESPERAR");
       if (ac.getState() == actionlib::SimpleClientGoalState::PREEMPTED){
         ROS_INFO("Objetivo cancelado");
 
@@ -538,7 +550,8 @@ int main(int argc, char** argv) {
         rellenaPoseStamped (goals.back().target_pose.pose.position.x, goals.back().target_pose.pose.position.y, goal, localcostmap);
         //planificar nuevos goals
         localPlanner(start,goal, plan, localcostmap);
-	condicion_parada = false;
+	      condicion_parada = false;
+        flag_guarro = true;
         for (int i = 0; i < plan.size(); i++){
           move_base_msgs::MoveBaseGoal goal;
 
@@ -548,7 +561,7 @@ int main(int argc, char** argv) {
           goal.target_pose.pose.position.x =plan.at(i).pose.position.x;
           goal.target_pose.pose.position.y =plan.at(i).pose.position.y;
           goal.target_pose.pose.orientation.w =	1;
-	  ROS_INFO("Vamos a insertar la sol (%f, %f)", goal.target_pose.pose.position.x,goal.target_pose.pose.position.y);
+	        ROS_INFO("Vamos a insertar la sol (%f, %f)", goal.target_pose.pose.position.x,goal.target_pose.pose.position.y);
           goals.push_back(goal);
         }
       }
