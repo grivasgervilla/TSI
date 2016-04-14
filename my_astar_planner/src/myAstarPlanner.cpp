@@ -43,7 +43,8 @@
 #include <string>
 
 
-using namespace std;
+
+
 
 
 
@@ -104,42 +105,38 @@ namespace myastar_planner {
     return -1.0;
   }
 
-  //Funciones aniadidas por los alumnos al codigo base
+  // Funciones hechas por los alumnos para completar el codigo
   /*
-  Funcion que devuelve la posicion de un nodo en una lista.
-  Si no esta en la lista devolvemos -1.
+  Funcion que devuelve un iterador al elemento buscado en la lista.
+  Si no se encuentra, devuelve end.
   */
-  int findNodo (unsigned int index, vector<coupleOfCells> &nodos) {
-  	for (int i = 0; i < nodos.size(); i++)
-  		if (nodos.at(i).index == index)
-  			return i;
-
-  	return -1;
+  list<coupleOfCells>::iterator findNodo (unsigned int index, list<coupleOfCells> &nodos) {
+  	for(list<coupleOfCells>::iterator it = nodos.begin(); it != nodos.end(); it++) {
+      if (it->index == index)
+        return it;
+    }
+    return nodos.end();
   }
 
   /*
   Funcion que saca el mejor nodo de la lista de abiertos y lo devuelve
   */
-  coupleOfCells getMejorNodo (vector<coupleOfCells> &OPL) {
+  coupleOfCells getMejorNodo (list<coupleOfCells> &OPL) {
   	double f_min = 9999999999999;
-  	int id_min;
+    list<coupleOfCells>::iterator it_min;
 
-  	for (int i = 0; i < OPL.size(); i++)
-  		if (OPL.at(i).fCost < f_min) {
-  			f_min = OPL.at(i).fCost;
-  			id_min = i;
-  		}
+    for( list<coupleOfCells>::iterator it = OPL.begin(); it != OPL.end(); it++) {
+      if (it->fCost < f_min) {
+        f_min = it->fCost;
+        it_min = it;
+      }
+    }
 
-  	coupleOfCells mejor_nodo = OPL.at(id_min);
-  	OPL.erase(OPL.begin() + id_min);
+  	coupleOfCells mejor_nodo = *it_min;
+  	OPL.erase(it_min);
 
   	return mejor_nodo;
 
-  }
-
-  vector<coupleOfCells> getVectorFromList (list<coupleOfCells> &list){
-    vector<coupleOfCells> v (list.begin(), list.end());
-    return v;
   }
 
   //función llamada por move_base para obtener el plan.
@@ -220,9 +217,8 @@ namespace myastar_planner {
     while (!MyastarPlanner::openList.empty()) //while the open list is not empty continuie the search
     {
 
-        vector<coupleOfCells> openVector = getVectorFromList(openList);
         //escoger el nodo (coupleOfCells) de abiertos que tiene el valor más pequeño de f.
-        coupleOfCells COfCells= getMejorNodo(openVector);
+        coupleOfCells COfCells= getMejorNodo(openList);
         currentIndex=COfCells.index;
 
         //vamos a insertar ese nodo  en cerrados
@@ -330,15 +326,14 @@ namespace myastar_planner {
           //openList.pop_front();
 
           //Buscamos en el costmap las celdas adyacentes a la actual
-          vector <coupleOfCells> closedVector = getVectorFromList(closedList);
           vector <unsigned int> neighborCells=findFreeNeighborCell(currentIndex);
           vector <unsigned int> new_open_nodes_idx;
           //Ignoramos las celdas que ya existen en CERRADOS
           for (int i = 0; i < neighborCells.size(); i++) {
-      			int idx_nodo_en_cerrados = findNodo(neighborCells.at(i), closedVector);
-      			int idx_nodo_en_abiertos = findNodo(neighborCells.at(i), openVector);
+      			list<coupleOfCells>::iterator it_nodo_en_cerrados = findNodo(neighborCells.at(i), closedList);
+      			list<coupleOfCells>::iterator it_nodo_en_abiertos = findNodo(neighborCells.at(i), openList);
 
-      			if (idx_nodo_en_cerrados == -1 && idx_nodo_en_abiertos == -1) { //si el nodo no esta en abiertos ni en cerrados
+      			if (it_nodo_en_cerrados == closedList.end() && it_nodo_en_abiertos == openList.end()) { //si el nodo no esta en abiertos ni en cerrados
       				new_open_nodes_idx.push_back(neighborCells.at(i));
       			}
       			// else if (idx_nodo_en_cerrados != -1) { //si esta en cerrados
@@ -346,13 +341,12 @@ namespace myastar_planner {
       			// 		closedList.at(idx_nodo_en_cerrados) = neighborCells.at(i);
       			// 	}
       			// }
-      			else if(idx_nodo_en_abiertos != -1){ //esta en abiertos
+      			else if(it_nodo_en_abiertos != openList.end()){ //esta en abiertos
                  double new_g_cost = cpstart.gCost + getMoveCost(currentIndex, neighborCells.at(i));
-                 list<coupleOfCells>::iterator it = getPositionInList(openList, neighborCells.at(i));
-      			     if ((*it).gCost > new_g_cost) { //si la g que tenia es peor que la nueva actualizo datos
-                       (*it).gCost = new_g_cost;
-                       (*it).fCost = new_g_cost + (*it).hCost;
-                       (*it).parent = currentIndex;
+      			     if (it_nodo_en_abiertos->gCost > new_g_cost) { //si la g que tenia es peor que la nueva actualizo datos
+                       it_nodo_en_abiertos->gCost = new_g_cost;
+                       it_nodo_en_abiertos->fCost = new_g_cost + it_nodo_en_abiertos->hCost;
+                       it_nodo_en_abiertos->parent = currentIndex;
       			     }
       			}
       		}
@@ -466,8 +460,6 @@ double MyastarPlanner::getMoveCost(unsigned int here, unsigned int there) {
   return calculateHCost(here,there);
 
 }
-
-
 
 /*******************************************************************************/
 //Function Name: addNeighborCellsToOpenList
