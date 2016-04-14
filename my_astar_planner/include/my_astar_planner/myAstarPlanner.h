@@ -122,7 +122,7 @@ struct coupleOfCells {
 
       //necesarios para manejar las listas de abiertos y cerrados de astar.
       list<coupleOfCells> openList; //!< the open list: it contains all the expanded cells (current cells)
-	  list<coupleOfCells> closedList; //!< the closed list: contains the explored cells
+	    list<coupleOfCells> closedList; //!< the closed list: contains the explored cells
 
       /**
        * @brief  Checks the legality of the robot footprint at a position and orientation using the world model
