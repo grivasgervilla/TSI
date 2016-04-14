@@ -153,6 +153,8 @@ namespace myastar_planner {
 
     ROS_INFO("MyastarPlanner: Got a start: %.2f, %.2f, and a goal: %.2f, %.2f", start.pose.position.x, start.pose.position.y, goal.pose.position.x, goal.pose.position.y);
 
+    MyastarPlanner::openList.clear();
+    MyastarPlanner::closedList.clear();
     plan.clear();
 
     //obtenemos el costmap global  que está publicado por move_base.
@@ -218,7 +220,7 @@ namespace myastar_planner {
     {
 
         //escoger el nodo (coupleOfCells) de abiertos que tiene el valor más pequeño de f.
-        coupleOfCells COfCells= getMejorNodo(openList);
+        coupleOfCells COfCells= getMejorNodo(MyastarPlanner::openList);
         currentIndex=COfCells.index;
 
         //vamos a insertar ese nodo  en cerrados
@@ -238,7 +240,7 @@ namespace myastar_planner {
         //y esa variable la insertamos en cerrados
             MyastarPlanner::closedList.push_back(cpstart);
         //ROS_INFO("Inserto en CERRADOS: %d", (*it).index );
-           ROS_INFO("G: %f, H: %f, F: %f", COfCells.gCost, COfCells.hCost, COfCells.fCost);
+           ROS_INFO("Mi G: %f, H: %f, F: %f", COfCells.gCost, COfCells.hCost, COfCells.fCost);
            ROS_INFO("Index: %d Parent: %d", COfCells.index, COfCells.parent);
 
 
@@ -277,7 +279,7 @@ namespace myastar_planner {
               {
                 //encontramos la posición de currentParent en cerrados
 
-                 list<coupleOfCells>::iterator it=getPositionInList(closedList,currentParent);
+                 list<coupleOfCells>::iterator it=getPositionInList(MyastarPlanner::closedList,currentParent);
                 //hacemos esa posición que sea el currentCouple
                 currentCouple.index=currentParent;
                 currentCouple.parent=(*it).parent;
@@ -330,10 +332,10 @@ namespace myastar_planner {
           vector <unsigned int> new_open_nodes_idx;
           //Ignoramos las celdas que ya existen en CERRADOS
           for (int i = 0; i < neighborCells.size(); i++) {
-      			list<coupleOfCells>::iterator it_nodo_en_cerrados = findNodo(neighborCells.at(i), closedList);
-      			list<coupleOfCells>::iterator it_nodo_en_abiertos = findNodo(neighborCells.at(i), openList);
+      			list<coupleOfCells>::iterator it_nodo_en_cerrados = findNodo(neighborCells.at(i), MyastarPlanner::closedList);
+      			list<coupleOfCells>::iterator it_nodo_en_abiertos = findNodo(neighborCells.at(i), MyastarPlanner::openList);
 
-      			if (it_nodo_en_cerrados == closedList.end() && it_nodo_en_abiertos == openList.end()) { //si el nodo no esta en abiertos ni en cerrados
+      			if (it_nodo_en_cerrados == MyastarPlanner::closedList.end() && it_nodo_en_abiertos == MyastarPlanner::openList.end()) { //si el nodo no esta en abiertos ni en cerrados
       				new_open_nodes_idx.push_back(neighborCells.at(i));
       			}
       			// else if (idx_nodo_en_cerrados != -1) { //si esta en cerrados
@@ -341,7 +343,7 @@ namespace myastar_planner {
       			// 		closedList.at(idx_nodo_en_cerrados) = neighborCells.at(i);
       			// 	}
       			// }
-      			else if(it_nodo_en_abiertos != openList.end()){ //esta en abiertos
+      			else if(it_nodo_en_abiertos != MyastarPlanner::openList.end()){ //esta en abiertos
                  double new_g_cost = cpstart.gCost + getMoveCost(currentIndex, neighborCells.at(i));
       			     if (it_nodo_en_abiertos->gCost > new_g_cost) { //si la g que tenia es peor que la nueva actualizo datos
                        it_nodo_en_abiertos->gCost = new_g_cost;
@@ -358,11 +360,11 @@ namespace myastar_planner {
 
          //Añadimos a ABIERTOS las celdas que todavía no están en ABIERTO, marcando el nodo actual como su padre
          //ver la función addNeighborCellsToOpenList(openList, neighborsNotInOpenList, currentIndex, coste_del_nodo_actual, indice_del_nodo_goal);
-         addNeighborCellsToOpenList(openList, new_open_nodes_idx, currentIndex, cpstart.gCost, cpgoal.index);
+         addNeighborCellsToOpenList(MyastarPlanner::openList, new_open_nodes_idx, currentIndex, cpstart.gCost, cpgoal.index);
          explorados++;
     }
 
-    if(openList.empty())  // if the openList is empty: then failure to find a path
+    if(MyastarPlanner::openList.empty())  // if the openList is empty: then failure to find a path
         {
             ROS_INFO("Failure to find a path !");
             return false;
