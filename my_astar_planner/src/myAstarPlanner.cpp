@@ -409,7 +409,18 @@ double MyastarPlanner::calculateHCost(unsigned int start, unsigned int goal) {
   costmap_->indexToCells(goal, mgoal_x, mgoal_y);
   costmap_->mapToWorld(mgoal_x, mgoal_y, wgoal_x, wgoal_y);
 
-  return sqrt((pow(wstart_x - wgoal_x,2))+pow(wstart_y - wgoal_y, 2)) + footprintCost(wstart_x, wstart_y, 0.0);
+  double distance = sqrt((pow(wstart_x - wgoal_x,2))+pow(wstart_y - wgoal_y, 2));
+
+  double weight;
+
+  if (distance < 1)
+    weight = 1;
+  else if (distance < 10)
+    weight = 1+distance/10;
+  else
+    weight = 2;
+  
+  return weight * (distance + footprintCost(wstart_x, wstart_y, 0.0));
  }
 
 
