@@ -112,6 +112,7 @@ struct coupleOfCells {
 
     private:
 
+      //static double MAX_HEURISTIC_VALUE = 999999999;
       //necesarios para manejar el costmap y el footprint.
       costmap_2d::Costmap2DROS* costmap_ros_;
       double step_size_, min_dist_from_robot_;
@@ -144,7 +145,7 @@ struct coupleOfCells {
       static bool compareFCost(coupleOfCells const &c1, coupleOfCells const &c2);
 
       //devuelve celdas adyacentes a CellID que estén libres
-      vector <unsigned int> findFreeNeighborCell (unsigned int CellID);
+      vector <unsigned int> findFreeNeighborCell (unsigned int CellID, double distance);
 
       /*******************************************************************************/
       //Function Name: addNeighborCellsToOpenList

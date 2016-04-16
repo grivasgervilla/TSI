@@ -98,11 +98,28 @@ namespace myastar_planner {
     }
 
     std::vector<geometry_msgs::Point> footprint = costmap_ros_->getRobotFootprint();
-    //if we have no footprint... do nothing
+    double x,y;
+    unsigned int mx, my;
+    int n_no_free = 0;
+    //if we have no footprint... do nothingfootprintCost
     if(footprint.size() < 3)
       return -1.0;
 
-    return -1.0;
+    //Recorremos las celdas en las que toca el borde del footprint del robot centrado en el punto que le pasamos
+    for (int i = 0; i < footprint.size(); i++) {
+      x = x_i + (footprint.at(i).x*cos(theta_i) - footprint.at(i).y*sin(theta_i));
+      y = y_i + (footprint.at(i).x*sin(theta_i) + footprint.at(i).y*cos(theta_i));
+      costmap_->worldToMap(x,y,mx, my);
+
+      //Vemos si es un obstaculo o una posicion peligrosa
+      if(costmap_->getCost(mx,my) == costmap_2d::LETHAL_OBSTACLE)
+        return 999999999;
+      else if (costmap_->getCost(mx,my) == costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
+        n_no_free++;
+    }
+
+    double cte = 1.0; //TODO
+    return cte*n_no_free;
   }
 
   // Funciones hechas por los alumnos para completar el codigo
@@ -122,7 +139,7 @@ namespace myastar_planner {
   Funcion que saca el mejor nodo de la lista de abiertos y lo devuelve
   */
   coupleOfCells getMejorNodo (list<coupleOfCells> &OPL) {
-  	double f_min = 9999999999999;
+  	double f_min = 999999999;
     list<coupleOfCells>::iterator it_min;
 
     for( list<coupleOfCells>::iterator it = OPL.begin(); it != OPL.end(); it++) {
@@ -326,9 +343,14 @@ namespace myastar_planner {
 
           //Si no hemos encontrado plan aún eliminamos el nodo insertado de ABIERTOS.
           //openList.pop_front();
-
+          unsigned int current_mx, current_my;
+          double current_wx, current_wy;
           //Buscamos en el costmap las celdas adyacentes a la actual
-          vector <unsigned int> neighborCells=findFreeNeighborCell(currentIndex);
+          costmap_->indexToCells(currentIndex, current_mx, current_my);
+          costmap_->mapToWorld(current_mx, current_my, current_wx, current_wy);
+
+          double distance = sqrt((goal_x - current_wx)*(goal_x - current_wx) + (goal_y - current_wy)*(goal_y - current_wy));
+          vector <unsigned int> neighborCells=findFreeNeighborCell(currentIndex, distance);
           vector <unsigned int> new_open_nodes_idx;
           //Ignoramos las celdas que ya existen en CERRADOS
           for (int i = 0; i < neighborCells.size(); i++) {
@@ -387,7 +409,7 @@ double MyastarPlanner::calculateHCost(unsigned int start, unsigned int goal) {
   costmap_->indexToCells(goal, mgoal_x, mgoal_y);
   costmap_->mapToWorld(mgoal_x, mgoal_y, wgoal_x, wgoal_y);
 
-  return sqrt((pow(wstart_x - wgoal_x,2))+pow(wstart_y - wgoal_y, 2));
+  return sqrt((pow(wstart_x - wgoal_x,2))+pow(wstart_y - wgoal_y, 2)) + footprintCost(wstart_x, wstart_y, 0.0);
  }
 
 
@@ -421,18 +443,24 @@ list<coupleOfCells>::iterator getPositionInList(list<coupleOfCells> & list1, uns
   *             costmap[x,y] = FREE_SPACE, donde (x,y) son las coordenadas en el costmap del índice i
   *
 *********************************************************************************/
-vector <unsigned int> MyastarPlanner::findFreeNeighborCell (unsigned int CellID){
+vector <unsigned int> MyastarPlanner::findFreeNeighborCell (unsigned int CellID, double distance){
 
         unsigned int mx, my;
         costmap_->indexToCells(CellID,mx,my);
         vector <unsigned int>  freeNeighborCells;
+        int paso;
+
+        if (distance < 1.0)
+          paso = 1;
+        else
+          paso = 5;
 
         for (int x=-1;x<=1;x++)
           for (int y=-1; y<=1;y++){
             //check whether the index is valid
-           if ((mx+x>=0)&&(mx+x < costmap_->getSizeInCellsX())&&(my+y >=0 )&&(my+y < costmap_->getSizeInCellsY())){
-              if(costmap_->getCost(mx+x,my+y) == costmap_2d::FREE_SPACE   && (!(x==0 && y==0))){
-                  unsigned int index = costmap_->getIndex(mx+x,my+y);
+           if ((mx+paso*x>=0)&&(mx+paso*x < costmap_->getSizeInCellsX())&&(my+paso*y >=0 )&&(my+paso*y < costmap_->getSizeInCellsY())){
+              if(costmap_->getCost(mx+paso*x,my+paso*y) == costmap_2d::FREE_SPACE   && (!(x==0 && y==0))){
+                  unsigned int index = costmap_->getIndex(mx+paso*x,my+paso*y);
                   freeNeighborCells.push_back(index);
               }
             }
