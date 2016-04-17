@@ -1,0 +1,14 @@
+Se adjuntan las siguientes carpetas:
+navigation_tutorials_indigo_devel donde estarán los launch para probar el código implementado con distintos mapas, estos launchs son (en el directorio navigation_stage/launch):
+  move_base_amcl5cm+global_planner.launch (mapa willow)
+  move_base_amcl5cm+global_planner+laberinto.launch (mapa laberinto)
+  simple.launch (mapa simple_rooms)
+
+my_astar_planner donde tenemos en el directorio src tres ficheros cpp:
+  myAstarPlanner.cpp (versión ejecutada por los distintos launchs)
+  myAstarPlanerConMedida (versión del fichero anterior con un mensaje para ver el número de nodos expandidos por cada ejecución del A*)
+  myAstarPlannerConMedidaSinMejora (igual que el anterior pero quitando aquellas mejoras que se han incluido para reducir el tiempo de exploración).
+
+Se adjuntan también las carpetas:
+  Miscostmaps
+  Mistage1516 donde están los mapas que usamos para los experimentos en las correspondientes subcarpetas maps y mundos

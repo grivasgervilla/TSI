@@ -1,7 +1,7 @@
 /*********************************************************************
 *
 * Software License Agreement (BSD License)
-*por un tema
+*
 *  Copyright (c) 2008, Willow Garage, Inc.
 *  Copyright (c) 2015, Juan Fdez-Olivares
 *  All rights reserved.
