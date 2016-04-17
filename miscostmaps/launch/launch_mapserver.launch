@@ -1,0 +1,4 @@
+<launch>
+	
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find miscostmaps)/maps/simple_rooms.png 0.1" />
+</launch>

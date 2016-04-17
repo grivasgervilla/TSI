@@ -1,0 +1,9 @@
+<launch>
+	
+	<!-- Run the map_server -->	
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find miscostmaps)/maps/simple_rooms.png 0.1" />
+	<!-- Run a stattic transform publisher
+			One basic thing that the costmap requires is a transformation from the frame of the costmap to the frame of the robot. 
+			For this purpose, one solution is to create a static transform publisher in a launch file. -->	
+	<node name="static_tf0" pkg="tf" type="static_transform_publisher" args="2 0 0 0 0 0 /map /base_link 100"/>
+</launch>

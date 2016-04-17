@@ -1,0 +1,32 @@
+<launch>
+	<master auto="start"/>
+        <param name="/use_sim_time" value="true"/>
+
+        <!-- Run a stattic transform publisher
+			One basic thing that the costmap requires is a transformation from the frame of the costmap to the frame of the robot.
+			For this purpose, one solution is to create a static transform publisher in a launch file. -->
+        <node name="static_tf0" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /base_link 100"/>
+        <!-- Run the map_server -->
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find miscostmaps)/maps/simple_rooms.png 0.05" />
+
+
+
+
+        <node pkg="stage_ros" type="stageros" name="stageros" args="$(find mistage1516)/configuracion/mundos/mi-simplerooms.world" respawn="false">
+              <param name="base_watchdog_timeout" value="0.2"/>
+        </node>
+
+
+
+       <node name="miscostmaps_node" pkg="miscostmaps" type="miscostmaps_node" >
+	  <rosparam file="$(find navigation_stage)/move_base_config/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+          <rosparam file="$(find navigation_stage)/move_base_config/local_costmap_params.yaml" command="load"/>
+        </node>
+
+        <!-- node name="global_costmap" pkg="costmap_2d" type="costmap_2d_node" output="screen">
+	  < rosparam file="$(find miscostmaps)/configuration/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+          <rosparam file="$(find miscostmaps)/configuration/global_costmap_params.yaml" command="load" />
+        </node>
+        <include file="$(find navigation_stage)/move_base_config/amcl_node.xml"/ -->
+
+</launch>
