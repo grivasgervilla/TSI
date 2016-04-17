@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "test_package")
+set(test_package_MAINTAINER "gustavo <gustavo@todo.todo>")
+set(test_package_DEPRECATED "")
+set(test_package_VERSION "0.0.0")
+set(test_package_BUILD_DEPENDS "roscpp" "rospy" "std_msgs")
+set(test_package_RUN_DEPENDS "roscpp" "rospy" "std_msgs")
+set(test_package_BUILDTOOL_DEPENDS "catkin")

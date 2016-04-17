@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "odometry_publisher_tutorial")
+set(odometry_publisher_tutorial_MAINTAINER "William Woodall <william@osrfoundation.org>")
+set(odometry_publisher_tutorial_DEPRECATED "")
+set(odometry_publisher_tutorial_VERSION "0.2.1")
+set(odometry_publisher_tutorial_BUILD_DEPENDS "nav_msgs" "roscpp" "tf")
+set(odometry_publisher_tutorial_RUN_DEPENDS "nav_msgs" "roscpp" "tf")
+set(odometry_publisher_tutorial_BUILDTOOL_DEPENDS "catkin")

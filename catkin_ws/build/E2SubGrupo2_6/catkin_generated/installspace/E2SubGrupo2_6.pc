@@ -1,0 +1,8 @@
+prefix=/home/gustavo/catkin_ws/install
+
+Name: E2SubGrupo2_6
+Description: Description of E2SubGrupo2_6
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/gustavo/catkin_ws/install/lib 
+Requires: 

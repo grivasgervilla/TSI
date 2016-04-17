@@ -1,0 +1,8 @@
+prefix=/home/gustavo/catkin_ws/install
+
+Name: simple_navigation_goals_tutorial
+Description: Description of simple_navigation_goals_tutorial
+Version: 0.2.1
+Cflags: 
+Libs: -L/home/gustavo/catkin_ws/install/lib 
+Requires: 

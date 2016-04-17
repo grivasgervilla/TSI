@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "simple_navigation_goals_tutorial")
+set(simple_navigation_goals_tutorial_MAINTAINER "William Woodall <william@osrfoundation.org>")
+set(simple_navigation_goals_tutorial_DEPRECATED "")
+set(simple_navigation_goals_tutorial_VERSION "0.2.1")
+set(simple_navigation_goals_tutorial_BUILD_DEPENDS "actionlib" "move_base_msgs" "roscpp" "tf")
+set(simple_navigation_goals_tutorial_RUN_DEPENDS "actionlib" "move_base_msgs" "roscpp" "tf")
+set(simple_navigation_goals_tutorial_BUILDTOOL_DEPENDS "catkin")

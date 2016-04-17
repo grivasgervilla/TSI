@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "navigation_stage")
+set(navigation_stage_MAINTAINER "William Woodall <william@osrfoundation.org>")
+set(navigation_stage_DEPRECATED "")
+set(navigation_stage_VERSION "0.2.1")
+set(navigation_stage_BUILD_DEPENDS "amcl" "fake_localization" "gmapping" "map_server" "move_base" "stage_ros")
+set(navigation_stage_RUN_DEPENDS "amcl" "fake_localization" "gmapping" "map_server" "move_base" "stage_ros")
+set(navigation_stage_BUILDTOOL_DEPENDS "catkin")

@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "mistage1516")
+set(mistage1516_MAINTAINER "juan <juan@todo.todo>")
+set(mistage1516_DEPRECATED "")
+set(mistage1516_VERSION "0.0.0")
+set(mistage1516_BUILD_DEPENDS )
+set(mistage1516_RUN_DEPENDS )
+set(mistage1516_BUILDTOOL_DEPENDS "catkin")

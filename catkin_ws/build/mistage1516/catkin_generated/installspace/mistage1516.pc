@@ -1,0 +1,8 @@
+prefix=/home/gustavo/catkin_ws/install
+
+Name: mistage1516
+Description: Description of mistage1516
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/gustavo/catkin_ws/install/lib 
+Requires: 

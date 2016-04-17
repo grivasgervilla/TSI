@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "action_lib_costmaps")
+set(action_lib_costmaps_MAINTAINER "juan <juan@todo.todo>")
+set(action_lib_costmaps_DEPRECATED "")
+set(action_lib_costmaps_VERSION "0.0.0")
+set(action_lib_costmaps_BUILD_DEPENDS )
+set(action_lib_costmaps_RUN_DEPENDS )
+set(action_lib_costmaps_BUILDTOOL_DEPENDS "catkin")

@@ -1,0 +1,8 @@
+prefix=/home/gustavo/catkin_ws/devel
+
+Name: roomba_stage
+Description: Description of roomba_stage
+Version: 0.2.1
+Cflags: 
+Libs: -L/home/gustavo/catkin_ws/devel/lib 
+Requires: 

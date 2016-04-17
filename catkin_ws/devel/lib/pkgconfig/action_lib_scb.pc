@@ -1,0 +1,8 @@
+prefix=/home/gustavo/catkin_ws/devel
+
+Name: action_lib_scb
+Description: Description of action_lib_scb
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/gustavo/catkin_ws/devel/lib 
+Requires: 

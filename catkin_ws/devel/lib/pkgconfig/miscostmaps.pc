@@ -1,0 +1,8 @@
+prefix=/home/gustavo/catkin_ws/devel
+
+Name: miscostmaps
+Description: Description of miscostmaps
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/gustavo/catkin_ws/devel/lib 
+Requires: 

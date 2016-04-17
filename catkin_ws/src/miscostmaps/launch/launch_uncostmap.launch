@@ -1,0 +1,7 @@
+<launch>
+	
+	<node name="mi_costmap" pkg="costmap_2d" type="costmap_2d_node" >
+	  <rosparam file="$(find navigation_stage)/move_base_config/costmap_common_params.yaml" command="load" ns="mi_costmap"/>
+          <rosparam file="$(find navigation_stage)/move_base_config/local_costmap_params.yaml" command="load"/>
+        </node>
+</launch>

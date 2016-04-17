@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "miscostmaps")
+set(miscostmaps_MAINTAINER "juan <juan@todo.todo>")
+set(miscostmaps_DEPRECATED "")
+set(miscostmaps_VERSION "0.0.0")
+set(miscostmaps_BUILD_DEPENDS "roscpp" "rospy" "std_msgs")
+set(miscostmaps_RUN_DEPENDS "roscpp" "rospy" "std_msgs")
+set(miscostmaps_BUILDTOOL_DEPENDS "catkin")

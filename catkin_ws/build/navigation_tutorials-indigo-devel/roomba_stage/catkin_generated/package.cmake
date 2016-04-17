@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "roomba_stage")
+set(roomba_stage_MAINTAINER "William Woodall <william@osrfoundation.org>")
+set(roomba_stage_DEPRECATED "")
+set(roomba_stage_VERSION "0.2.1")
+set(roomba_stage_BUILD_DEPENDS "fake_localization" "map_server" "move_base" "stage_ros")
+set(roomba_stage_RUN_DEPENDS "fake_localization" "map_server" "move_base" "stage_ros")
+set(roomba_stage_BUILDTOOL_DEPENDS "catkin")

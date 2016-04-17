@@ -1,0 +1,6 @@
+<launch>
+	<master auto="start"/>
+        <param name="/use_sim_time" value="true"/>
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find mistage1516)/configuracion/maps/simple_rooms.png 0.1" />
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find mistage1516)/single_robot.rviz" />
+</launch>

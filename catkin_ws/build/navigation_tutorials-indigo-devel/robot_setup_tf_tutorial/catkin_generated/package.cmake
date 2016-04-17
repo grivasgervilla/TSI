@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "robot_setup_tf_tutorial")
+set(robot_setup_tf_tutorial_MAINTAINER "William Woodall <william@osrfoundation.org>")
+set(robot_setup_tf_tutorial_DEPRECATED "")
+set(robot_setup_tf_tutorial_VERSION "0.2.1")
+set(robot_setup_tf_tutorial_BUILD_DEPENDS "geometry_msgs" "roscpp" "tf")
+set(robot_setup_tf_tutorial_RUN_DEPENDS "geometry_msgs" "roscpp" "tf")
+set(robot_setup_tf_tutorial_BUILDTOOL_DEPENDS "catkin")

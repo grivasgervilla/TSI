@@ -1,0 +1,8 @@
+prefix=/home/gustavo/catkin_ws/devel
+
+Name: point_cloud_publisher_tutorial
+Description: Description of point_cloud_publisher_tutorial
+Version: 0.2.1
+Cflags: 
+Libs: -L/home/gustavo/catkin_ws/devel/lib 
+Requires: 
