@@ -1,3 +1,7 @@
+==========
+CONTENIDO:
+==========
+
 Se adjuntan las siguientes carpetas:
 navigation_tutorials_indigo_devel donde estarán los launch para probar el código implementado con distintos mapas, estos launchs son (en el directorio navigation_stage/launch):
   move_base_amcl5cm+global_planner.launch (mapa willow)
@@ -12,3 +16,12 @@ my_astar_planner donde tenemos en el directorio src tres ficheros cpp:
 Se adjuntan también las carpetas:
   Miscostmaps
   Mistage1516 donde están los mapas que usamos para los experimentos en las correspondientes subcarpetas maps y mundos
+
+=====================
+INSTRUCCIONES DE USO:
+=====================
+1) Añadir las distintas carpetas (los distintos paquetes) en el directorio src de un directorio catkin vacío (para evitar conflictos de nombres)
+2) Para probar el funcionamiento del robot (con las mejoras) en cada uno de los mapas usados hacer lo siguiente desde el directorio raíz del directorio catkin donde hemos copiado los paquetes (antes hacer catkin_make y source devel/setup.bash):
+	a) roslaunch src/navigation_tutorials_indigo_devel/navigation_stage/move_base_amcl5cm+global_planner.launch (mapa willow)
+	b) roslaunch src/navigation_tutorials_indigo_devel/navigation_stage/move_base_amcl5cm+global_planner+laberinto.launch (mapa laberinto)
+	a) roslaunch src/navigation_tutorials_indigo_devel/navigation_stage/simple.launch (mapa simple-rooms)
