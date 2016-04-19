@@ -64,6 +64,19 @@ Lo que se usa es un procedimiento de búsqueda con backtracking, partiendo de un
 No hacemos que los hijos de un nodo sean las posibles asignaciones, sino que lo que hacemos que los hijos serán posibles asignaciones a una variable, de modo que el proceso de búsqueda sea una construcción incremental de una asignación.
 
 <img src='http://g.gravizo.com/g?
+ digraph G {
+   main -> parse -> execute;
+   main -> init;
+   main -> cleanup;
+   execute -> make_string;
+   execute -> printf
+   init -> make_string;
+   main -> printf;
+   execute -> compare;
+ }
+'/>
+
+<img src='http://g.gravizo.com/g?
 
 digraph grafo de restricciones {
 
