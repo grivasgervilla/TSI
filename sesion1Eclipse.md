@@ -25,7 +25,7 @@ Luego nos preguntamos si un determinado estado, si una asignación concreta, es 
 
 Veamos ahora cómo expresamos las restricciones, por escrito nos podemos permitir cierta libertad en el lenguaje matemático que empleamos para implementar estas restricciones. Luego ya veremos cómo se traduce esto al lenguaje de programación concreto.
 
-<center>
+<p align="center">
 
 |    | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 |----|---|---|----|----|----|----|----|----|
@@ -33,7 +33,7 @@ Veamos ahora cómo expresamos las restricciones, por escrito nos podemos permiti
 | T2 |   | X | X  | X  | X  | X  |    |    |
 | T3 |   |   |    |    | X  | X  | X  |    |
 | T4 |   |   |    | X  | X  | X  | X  | X  |
-</center>
+</p>
 lo que estamos haciendo es un diagrama de Gantt para usar los horarios de los trenes para poder establecer las restricciones.
 
 Como no se pueden solapar los horarios puesto que una locomotora sólo puede tirar de un objeto a la vez, entonces:
@@ -61,7 +61,7 @@ Luego ya le pondremos una instrucción en nuestro lenguaje de programación para
 Lo que se usa es un procedimiento de búsqueda con backtracking, partiendo de un nodo vacío y luego ir progresivamente rellenando las asignaciones.
 No hacemos que los hijos de un nodo sean las posibles asignaciones, sino que lo que hacemos que los hijos serán posibles asignaciones a una variable, de modo que el proceso de búsqueda sea una construcción incremental de una asignación.
 
-<center>
+<p align="center">
 
 ![Alt text](http://g.gravizo.com/g?
   digraph G {
@@ -75,7 +75,7 @@ No hacemos que los hijos de un nodo sean las posibles asignaciones, sino que lo 
   }
 )
 
-</center>
+</p>
 
 Entonces como podemos ver en este grafo el la más restrictiva es T4 puesto que es la que participa en un mayor número de restricciones, con lo cual por lógica esta es a la primera a la que le damos valor.
 
