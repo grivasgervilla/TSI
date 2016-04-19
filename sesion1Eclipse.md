@@ -65,35 +65,16 @@ No hacemos que los hijos de un nodo sean las posibles asignaciones, sino que lo 
 
 ![Alt text](http://g.gravizo.com/g?
   digraph G {
-    aize ="4,4";
-    main [shape=box];
-    main -> parse [weight=8];
-    parse -> execute;
-    main -> init [style=dotted];
-    main -> cleanup;
-    execute -> { make_string; printf}
-    init -> make_string;
-    edge [color=red];
-    main -> printf [style=bold,label="100 times"];
-    make_string [label="make a string"];
-    node [shape=box,style=filled,color=".7 .3 1.0"];
-    execute -> compare;
+    T1 -> T2 [label = "!="];
+    T2 -> T3 [label = "!="];
+    T2 -> T4 [label = "!="];
+    T3 -> T3 [label = "!="];
+
+    T3 -> T3 [label = "!= 3"];
+
+    T4 -> T4 [label = "!= 3"];
+    T4 -> T4 [label = "!= 2"];
   }
 )
 
-<img src='http://g.gravizo.com/g?
-
-digraph grafo de restricciones {
-
-    T1 -> T2 [label = "!="]
-    T2 -> T3 [label = "!="]
-    T2 -> T4 [label = "!="]
-    T3 -> T3 [label = "!="]
-
-    T3 -> T3 [label = "!= 3"]
-
-    T4 -> T4 [label = "!= 3"]
-    T4 -> T4 [label = "!= 2"]
-}
-'/>
 Entonces como podemos ver en este grafo el la más restrictiva es T4 puesto que es la que participa en un mayor número de restricciones, con lo cual por lógica esta es a la primera a la que le damos valor.
