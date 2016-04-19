@@ -26,6 +26,7 @@ Luego nos preguntamos si un determinado estado, si una asignación concreta, es 
 Veamos ahora cómo expresamos las restricciones, por escrito nos podemos permitir cierta libertad en el lenguaje matemático que empleamos para implementar estas restricciones. Luego ya veremos cómo se traduce esto al lenguaje de programación concreto.
 
 <center>
+
 |    | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 |----|---|---|----|----|----|----|----|----|
 | T1 | X | X |    |    |    |    |    |    |
