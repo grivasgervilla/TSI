@@ -26,7 +26,6 @@ Luego nos preguntamos si un determinado estado, si una asignación concreta, es 
 Veamos ahora cómo expresamos las restricciones, por escrito nos podemos permitir cierta libertad en el lenguaje matemático que empleamos para implementar estas restricciones. Luego ya veremos cómo se traduce esto al lenguaje de programación concreto.
 
 <p align="center">
-
 |    | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 |----|---|---|----|----|----|----|----|----|
 | T1 | X | X |    |    |    |    |    |    |
@@ -62,7 +61,6 @@ Lo que se usa es un procedimiento de búsqueda con backtracking, partiendo de un
 No hacemos que los hijos de un nodo sean las posibles asignaciones, sino que lo que hacemos que los hijos serán posibles asignaciones a una variable, de modo que el proceso de búsqueda sea una construcción incremental de una asignación.
 
 <p align="center">
-
 ![Alt text](http://g.gravizo.com/g?
   digraph G {
     T1 -> T2 [label = "!="];
