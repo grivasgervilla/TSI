@@ -68,7 +68,7 @@ No hacemos que los hijos de un nodo sean las posibles asignaciones, sino que lo 
     T1 -> T2 [label = "!="];
     T2 -> T3 [label = "!="];
     T2 -> T4 [label = "!="];
-    T3 -> T3 [label = "!="];
+    T3 -> T4 [label = "!="];
     T3 -> T3 [label = "!= 3"];
     T4 -> T4 [label = "!= 3"];
     T4 -> T4 [label = "!= 2"];
