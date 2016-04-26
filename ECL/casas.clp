@@ -4,8 +4,8 @@
 %restricciones hay que seguir una cierta sintaxis específica para dicha librería
 
 csp(Lista):-
-  Lista = [T1,T2,T3,T4],
-  Lista &:: [l1,l2,l3], %def. de dominios, el mismo dominio para todas las vars. (no podemos usar valores enteros por usar sd)
+  Lista = [A,B,C,D],
+  Lista &:: [c1,c2,c3, c4], %def. de dominios, el mismo dominio para todas las vars. (no podemos usar valores enteros por usar sd)
 
   %pasamos ahora a definir restricciones, pero claro como los dominios los hemos definido
   %con los operadores de la sd pues hemos de usar los operadores de esa libería
